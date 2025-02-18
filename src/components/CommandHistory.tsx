@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { observer } from "mobx-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import state from "../state/state";
+import { useEffect } from "react";
 
 function insertNewlines(text: string) {
   return text
@@ -37,26 +39,23 @@ function HistoryItem(props: {
   );
 }
 
-function CommandHistory(props: {
-  history: { style: string; text: string }[];
-}) {
-  const [historySize, setHistorySize] = useState(0);
-
-  useEffect(() => {
-    if (historySize !== props.history.length) {
-      setHistorySize(props.history.length);
-      const scrollArea = document.querySelector(".command-history-container")!;
+const CommandHistory = observer(
+  () => {
+    useEffect(() => {
+      const scrollArea = document.querySelector(
+        ".command-history-container"
+      )!;
       scrollArea.scrollTop = scrollArea.scrollHeight;
-    }
-  }, [historySize, props.history.length]);
+    });
 
-  return (
-    <div className="command-history-container">
-      {props.history.map((historyItem, index) => (
-        <HistoryItem key={index} historyItem={historyItem} index={index} />
-      ))}
-    </div>
-  );
-}
+    return (
+      <div className="command-history-container">
+        {state.commandHistory.map((historyItem, index) => (
+          <HistoryItem key={index} historyItem={historyItem} index={index} />
+        ))}
+      </div>
+    );
+  }
+);
 
 export default CommandHistory;

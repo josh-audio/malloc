@@ -9,21 +9,10 @@ import state from "./state/state.ts";
 import { observer } from "mobx-react";
 
 const App = observer(() => {
-  const [commandHeight, setCommandHeight] = useState(500);
+  const [commandHeight, setCommandHeight] = useState(300);
   const [isDragActive, setIsDragActive] = useState(false);
-  const [commandHistory, setCommandHistory] = useState<
-    { style: string; text: string }[]
-  >([]);
-  const uiState = engine.getState();
 
-  if (commandHistory.length === 0) {
-    setCommandHistory([
-      {
-        style: "info",
-        text: "-> Type help() for usage.",
-      },
-    ]);
-  }
+  const uiState = engine.getState();
 
   const handleMouseMove = (event: React.MouseEvent) => {
     if (!isDragActive) {
@@ -68,7 +57,6 @@ const App = observer(() => {
       />
       <CommandArea
         height={commandHeight}
-        commandHistory={commandHistory}
         getPrediction={(text: string): string => {
           const spaceSplit = text.split(" ");
           const spaceLastWord = spaceSplit[spaceSplit.length - 1];
@@ -170,7 +158,7 @@ const App = observer(() => {
                   outputResult = result.type;
                 } else if (result.nodeType === "action") {
                   if (result.action === "clearConsole") {
-                    setCommandHistory([]);
+                    state.resetCommandHistory();
                     return;
                   } else {
                     throw new Error("Internal error: Unsupported UI action.");
@@ -198,7 +186,9 @@ const App = observer(() => {
             }
           }
 
-          setCommandHistory([...commandHistory, ...historyToAdd]);
+          for (const historyItem of historyToAdd) {
+            state.commandHistory.push(historyItem);
+          }
         }}
       />
     </div>
