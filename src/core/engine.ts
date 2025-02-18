@@ -140,6 +140,10 @@ class Engine {
         nodeType: "variable",
         type: "function",
         value: (argument: unknown) => {
+          if (typeof argument === "string") {
+            argument = parseInt(argument);
+          }
+
           if (typeof argument !== "number") {
             throw new Error(
               'Syntax error ("malloc()"):\n  Expected 1 argument of type "int", got ' +
