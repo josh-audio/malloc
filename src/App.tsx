@@ -3,7 +3,7 @@ import "./App.css";
 import CommandArea from "./components/CommandArea.tsx";
 import MemoryVisualizer from "./components/MemoryVisualizer.tsx";
 import nearley from "nearley";
-import Engine from "./core/engine.ts";
+import engine, {Engine} from "./core/engine.ts";
 import Grammar from "./core/grammar.ts";
 
 function App() {
@@ -16,20 +16,7 @@ function App() {
     blocks: [],
   });
 
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  if (window.engine === undefined) {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    window.engine = new Engine();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    setUiState(window.engine.getState());
-  }
-
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const engine: Engine = window.engine;
+  setUiState(engine.getState());
 
   if (commandHistory.length === 0) {
     setCommandHistory([

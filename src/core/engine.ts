@@ -1049,4 +1049,7 @@ class Engine {
   }
 }
 
-export default Engine;
+const engine = new Engine();
+
+export default engine;
+export {Engine};
