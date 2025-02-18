@@ -2,7 +2,7 @@
 
 A visualizer to help explain `malloc()` and related concepts.
 
-A live version can be found [here](https://josh-audio.github).
+A live version can be found [here](https://josh-audio.github.io/malloc).
 
 ## Setup
 
