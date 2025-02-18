@@ -9,7 +9,7 @@ function MemoryCell(props: {
         (props.cellState.isReserved ? " reserved" : " unreserved")
       }
     >
-      {props.cellState.index}
+      {props.cellState.index.toString(16).padStart(2, "0").toUpperCase()}
     </div>
   );
 }
