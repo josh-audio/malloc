@@ -379,6 +379,11 @@ class Engine {
         let bestSize = state.heap.length - 1; // accounts for reserved word
         let bestStart = 0;
         let i = 0;
+
+        // TODO: This is almost certainly still broken. Fixing an infinite
+        // loop the dumb way for now...
+
+        let count = 0;
         while (i !== undefined) {
           const cellVal = state.heap[i].value
             ? state.heap[i].value
@@ -388,6 +393,9 @@ class Engine {
             bestStart = i;
           }
           i = state.heap[i].value;
+
+          if (count > 255) break;
+          count++;
         }
         if (size <= bestSize) {
           startIndex = bestStart;
@@ -398,6 +406,11 @@ class Engine {
         let bestSize = 0;
         let bestStart = 0;
         let i = 0;
+
+        // TODO: This is almost certainly still broken. Fixing an infinite
+        // loop the dumb way for now...
+
+        let count = 0;
         while (i !== undefined) {
           const cellVal = state.heap[i].value
             ? state.heap[i].value
@@ -407,6 +420,9 @@ class Engine {
             bestStart = i;
           }
           i = state.heap[i].value;
+
+          if (count > 255) break;
+          count++;
         }
         if (size <= bestSize) {
           startIndex = bestStart;
@@ -512,6 +528,11 @@ class Engine {
 
   coalesce() {
     let ptr = 0;
+
+    // TODO: This is almost certainly still broken. Fixing an infinite
+    // loop the dumb way for now...
+
+    let count = 0;
     while (true) {
       if (ptr >= state.heap.length) {
         break;
@@ -537,6 +558,9 @@ class Engine {
       }
 
       ptr = state.heap[ptr].value;
+
+      if (count > 255) break;
+      count++;
     }
   }
 
