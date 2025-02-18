@@ -3,20 +3,18 @@ import "./App.css";
 import CommandArea from "./components/CommandArea.tsx";
 import MemoryVisualizer from "./components/MemoryVisualizer.tsx";
 import nearley from "nearley";
-import engine, {Engine} from "./core/engine.ts";
+import engine from "./core/engine.ts";
 import Grammar from "./core/grammar.ts";
+import state from "./state/state.ts";
+import { observer } from "mobx-react";
 
-function App() {
+const App = observer(() => {
   const [commandHeight, setCommandHeight] = useState(500);
   const [isDragActive, setIsDragActive] = useState(false);
   const [commandHistory, setCommandHistory] = useState<
     { style: string; text: string }[]
   >([]);
-  const [uiState, setUiState] = useState<ReturnType<Engine["getState"]>>({
-    blocks: [],
-  });
-
-  setUiState(engine.getState());
+  const [uiState, setUiState] = useState(engine.getState());
 
   if (commandHistory.length === 0) {
     setCommandHistory([
@@ -55,6 +53,7 @@ function App() {
         setIsDragActive(false);
       }}
     >
+      {state.heap.filter((elem) => elem.isAllocated).length}
       <div className="mainContent" style={{ flex: 1 }}>
         <MemoryVisualizer memState={uiState} />
       </div>
@@ -206,6 +205,6 @@ function App() {
       />
     </div>
   );
-}
+});
 
 export default App;

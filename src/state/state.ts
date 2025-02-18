@@ -1,7 +1,8 @@
 import { makeAutoObservable } from "mobx";
 
 class State {
-  someString: string = 'red';
+  memorySize: number = 256;
+  heap: { isAllocated: boolean; isReserved: boolean; value: number }[] = [];
 
   constructor() {
     makeAutoObservable(this);

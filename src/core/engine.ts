@@ -2,6 +2,9 @@
 // - a value, e.g. 5, "hello", etc.
 // - a built-in function, e.g. malloc(), free(), etc.
 // - a type, e.g. int, double, etc.
+
+import state from "../state/state";
+
 // - a built-in action to be handled by the interpreter, e.g. the output of clearConsole()
 type RuntimeToken = Value | Action | Type;
 
@@ -67,25 +70,22 @@ type Action = {
 };
 
 class Engine {
-  memorySize: number;
-  heap: { isAllocated: boolean; isReserved: boolean; value: number }[] = [];
   variables: Record<string, RuntimeToken> = {};
 
   constructor() {
-    this.memorySize = 256;
     this.reset();
   }
 
   reset() {
-    this.heap = [];
-    for (let i = 0; i < this.memorySize; i++) {
-      this.heap.push({
+    state.heap = [];
+    for (let i = 0; i < state.memorySize; i++) {
+      state.heap.push({
         isAllocated: false,
         isReserved: false,
         value: 0,
       });
     }
-    this.heap[0].isReserved = true;
+    state.heap[0].isReserved = true;
 
     // key: variable identifier
     // value: {nodeType: 'variable', type: 'someType', value: someValue}
@@ -180,10 +180,10 @@ class Engine {
           let i = 0;
 
           while (i !== undefined) {
-            if (this.heap[i].isAllocated) {
+            if (state.heap[i].isAllocated) {
               this.free(i + 1);
             }
-            i = this.heap[i].value;
+            i = state.heap[i].value;
           }
 
           return {
@@ -355,33 +355,33 @@ class Engine {
       case "first fit": {
         let i = 0;
         while (i !== undefined) {
-          if (!this.heap[i].isAllocated) {
-            const cellVal = this.heap[i].value
-              ? this.heap[i].value
-              : this.heap.length;
+          if (!state.heap[i].isAllocated) {
+            const cellVal = state.heap[i].value
+              ? state.heap[i].value
+              : state.heap.length;
             const currentSize = cellVal - i - 1;
             if (currentSize >= size) {
               startIndex = i;
               break;
             }
           }
-          i = this.heap[i].value;
+          i = state.heap[i].value;
         }
         break;
       }
       case "best fit": {
-        let bestSize = this.heap.length - 1; // accounts for reserved word
+        let bestSize = state.heap.length - 1; // accounts for reserved word
         let bestStart = 0;
         let i = 0;
         while (i !== undefined) {
-          const cellVal = this.heap[i].value
-            ? this.heap[i].value
-            : this.heap.length;
-          if (!this.heap[i].isAllocated && cellVal - i - 1 < bestSize) {
+          const cellVal = state.heap[i].value
+            ? state.heap[i].value
+            : state.heap.length;
+          if (!state.heap[i].isAllocated && cellVal - i - 1 < bestSize) {
             bestSize = cellVal - i - 1;
             bestStart = i;
           }
-          i = this.heap[i].value;
+          i = state.heap[i].value;
         }
         if (size <= bestSize) {
           startIndex = bestStart;
@@ -393,14 +393,14 @@ class Engine {
         let bestStart = 0;
         let i = 0;
         while (i !== undefined) {
-          const cellVal = this.heap[i].value
-            ? this.heap[i].value
-            : this.heap.length;
-          if (!this.heap[i].isAllocated && cellVal - i - 1 > bestSize) {
+          const cellVal = state.heap[i].value
+            ? state.heap[i].value
+            : state.heap.length;
+          if (!state.heap[i].isAllocated && cellVal - i - 1 > bestSize) {
             bestSize = cellVal - i - 1;
             bestStart = i;
           }
-          i = this.heap[i].value;
+          i = state.heap[i].value;
         }
         if (size <= bestSize) {
           startIndex = bestStart;
@@ -418,49 +418,49 @@ class Engine {
     }
 
     for (let i = startIndex; i <= startIndex + size; i++) {
-      this.heap[i].isAllocated = true;
+      state.heap[i].isAllocated = true;
     }
 
-    this.heap[startIndex].isReserved = true;
-    const oldCellValue = this.heap[startIndex].value;
-    this.heap[startIndex].value = startIndex + size + 1;
-    if (this.heap[startIndex].value >= this.heap.length) {
-      // this.heap[startIndex].value = undefined;
+    state.heap[startIndex].isReserved = true;
+    const oldCellValue = state.heap[startIndex].value;
+    state.heap[startIndex].value = startIndex + size + 1;
+    if (state.heap[startIndex].value >= state.heap.length) {
+      // state.heap[startIndex].value = undefined;
       // TODO: Is this necessary? We need to transition to making memory readable anyway
     }
 
     if (
-      this.heap[startIndex + size + 1] !== undefined &&
-      !this.heap[startIndex + size + 1].isReserved
+      state.heap[startIndex + size + 1] !== undefined &&
+      !state.heap[startIndex + size + 1].isReserved
     ) {
-      this.heap[startIndex + size + 1].isReserved = true;
-      this.heap[startIndex + size + 1].value = oldCellValue;
+      state.heap[startIndex + size + 1].isReserved = true;
+      state.heap[startIndex + size + 1].value = oldCellValue;
     }
 
     return startIndex + 1;
   }
 
   free(ptr: number) {
-    if (this.heap[ptr - 1] === undefined) {
+    if (state.heap[ptr - 1] === undefined) {
       throw new Error(
         "Runtime exception in free():\n  Memory pointer is out of bounds."
       );
     } else if (
-      !this.heap[ptr - 1].isReserved ||
-      !this.heap[ptr - 1].isAllocated
+      !state.heap[ptr - 1].isReserved ||
+      !state.heap[ptr - 1].isAllocated
     ) {
       throw new Error(
         "Runtime exception in free():\n  Memory pointer does not point to the start of an allocated chunk."
       );
     }
 
-    this.heap[ptr - 1].isAllocated = false;
+    state.heap[ptr - 1].isAllocated = false;
 
-    for (let i = ptr; i < this.heap.length; i++) {
-      if (this.heap[i].isReserved) {
+    for (let i = ptr; i < state.heap.length; i++) {
+      if (state.heap[i].isReserved) {
         break;
       }
-      this.heap[i].isAllocated = false;
+      state.heap[i].isAllocated = false;
     }
   }
 
@@ -471,18 +471,18 @@ class Engine {
       );
     }
 
-    if (size === this.memorySize) {
+    if (size === state.memorySize) {
       return;
-    } else if (size > this.memorySize) {
-      for (let i = 0; i < size - this.memorySize; i++) {
-        if (i === 0 && this.heap[this.memorySize - 1].isAllocated) {
-          this.heap.push({
+    } else if (size > state.memorySize) {
+      for (let i = 0; i < size - state.memorySize; i++) {
+        if (i === 0 && state.heap[state.memorySize - 1].isAllocated) {
+          state.heap.push({
             isAllocated: false,
             isReserved: true,
             value: 0,
           });
         } else {
-          this.heap.push({
+          state.heap.push({
             isAllocated: false,
             isReserved: false,
             value: 0,
@@ -490,47 +490,47 @@ class Engine {
         }
       }
     } else {
-      this.heap = this.heap.slice(0, size);
+      state.heap = state.heap.slice(0, size);
 
-      for (let i = this.heap.length - 1; i >= 0; i--) {
-        if (this.heap[i].isReserved) {
-          // this.heap[i].next = undefined;
+      for (let i = state.heap.length - 1; i >= 0; i--) {
+        if (state.heap[i].isReserved) {
+          // state.heap[i].next = undefined;
           // TODO: This is definitely not valid
           break;
         }
       }
     }
 
-    this.memorySize = size;
+    state.memorySize = size;
   }
 
   coalesce() {
     let ptr = 0;
     while (true) {
-      if (ptr >= this.heap.length) {
+      if (ptr >= state.heap.length) {
         break;
       }
 
       if (
-        this.heap[ptr].value === undefined ||
-        this.heap[ptr].value < 0 ||
-        this.heap[ptr].value >= this.heap.length
+        state.heap[ptr].value === undefined ||
+        state.heap[ptr].value < 0 ||
+        state.heap[ptr].value >= state.heap.length
       ) {
         break;
       }
 
       if (
-        !this.heap[ptr].isAllocated &&
-        !this.heap[this.heap[ptr].value].isAllocated
+        !state.heap[ptr].isAllocated &&
+        !state.heap[state.heap[ptr].value].isAllocated
       ) {
-        const cellValuePtr = this.heap[ptr].value;
-        this.heap[ptr].value = this.heap[cellValuePtr].value;
-        this.heap[cellValuePtr].value = 0; // TODO: Unusure about this
-        this.heap[cellValuePtr].isReserved = false;
+        const cellValuePtr = state.heap[ptr].value;
+        state.heap[ptr].value = state.heap[cellValuePtr].value;
+        state.heap[cellValuePtr].value = 0; // TODO: Unusure about this
+        state.heap[cellValuePtr].isReserved = false;
         continue;
       }
 
-      ptr = this.heap[ptr].value;
+      ptr = state.heap[ptr].value;
     }
   }
 
@@ -547,28 +547,29 @@ class Engine {
       }[];
     }[];
   } {
-    const state: ReturnType<Engine["getState"]> = { blocks: [] };
-    state.blocks = [];
+    const result: ReturnType<Engine["getState"]> = { blocks: [] };
+    result.blocks = [];
 
     let block: ReturnType<Engine["getState"]>["blocks"][number] | undefined;
     let createNewBlock = true;
-    for (let i = 0; i < this.heap.length; i++) {
+    for (let i = 0; i < state.heap.length; i++) {
       if (createNewBlock) {
         if (block !== undefined) {
-          state.blocks.push(block);
+          result.blocks.push(block);
         }
 
-        block = { cells: [], isAllocated: this.heap[i].isAllocated };
+        block = { cells: [], isAllocated: state.heap[i].isAllocated };
       }
 
-      block!.cells.push({ ...this.heap[i], index: i });
+      block!.cells.push({ ...state.heap[i], index: i });
 
-      createNewBlock = i + 1 < this.heap.length && this.heap[i + 1].isReserved;
+      createNewBlock =
+        i + 1 < state.heap.length && state.heap[i + 1].isReserved;
     }
 
-    state.blocks.push(block!);
+    result.blocks.push(block!);
 
-    return state;
+    return result;
   }
 
   // Recursively evaluates a node in the AST
@@ -1052,4 +1053,4 @@ class Engine {
 const engine = new Engine();
 
 export default engine;
-export {Engine};
+export { Engine };
