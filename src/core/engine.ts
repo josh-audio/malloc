@@ -179,11 +179,17 @@ class Engine {
         value: () => {
           let i = 0;
 
+          // TODO: This is almost certainly still broken. Fixing an infinite
+          // loop the dumb way for now...
+
+          let count = 0;
           while (i !== undefined) {
             if (state.heap[i].isAllocated) {
               this.free(i + 1);
             }
             i = state.heap[i].value;
+            if (count > 255) break;
+            count++;
           }
 
           return {
