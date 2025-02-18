@@ -14,7 +14,7 @@ const App = observer(() => {
   const [commandHistory, setCommandHistory] = useState<
     { style: string; text: string }[]
   >([]);
-  const [uiState, setUiState] = useState(engine.getState());
+  const uiState = engine.getState();
 
   if (commandHistory.length === 0) {
     setCommandHistory([
@@ -160,8 +160,6 @@ const App = observer(() => {
               const result = engine.evaluate(parser.results);
 
               let outputResult: string | undefined;
-
-              setUiState(engine.getState());
 
               if (result !== undefined && result.toString() !== "") {
                 if (result.nodeType === "variable") {
