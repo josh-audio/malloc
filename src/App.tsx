@@ -7,6 +7,7 @@ import engine from "./core/engine.ts";
 import Grammar from "./core/grammar.ts";
 import state from "./state/state.ts";
 import { observer } from "mobx-react";
+import statementSchema from "./core/grammar_output_validator.ts";
 
 const App = observer(() => {
   const [commandHeight, setCommandHeight] = useState(300);
@@ -145,7 +146,13 @@ const App = observer(() => {
 
           if (!syntaxError) {
             try {
-              const result = engine.evaluate(parser.results);
+              if (parser.results.length !== 1) {
+                throw new Error("Internal error: Unexpected parser output.");
+              }
+
+              const validated = statementSchema.parse(parser.results[0]);
+
+              const result = engine.evaluate(validated);
 
               let outputResult: string | undefined;
 

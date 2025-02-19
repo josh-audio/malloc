@@ -4,6 +4,7 @@
 // - a type, e.g. int, double, etc.
 
 import state from "../state/state";
+import { LiteralNode, StatementNode } from "./grammar_output_validator";
 
 // - a built-in action to be handled by the interpreter, e.g. the output of clearConsole()
 type RuntimeToken = Value | Action | Type;
@@ -602,10 +603,22 @@ class Engine {
     return result;
   }
 
-  // Recursively evaluates a node in the AST
-  // and returns the result, along with
+  evaluateLiteral(node: LiteralNode['literal']): RuntimeToken {
+    switch (node.nodeType) {
+      case "int":
+        return { nodeType: "variable", type: "int", value: parseInt(node.int) };
+      case "char":
+        return { nodeType: "variable", type: "char", value: node.char };
+      case "double":
+        return { nodeType: "variable", type: "double", value: parseFloat(node.double) };
+      case "string":
+        return { nodeType: "variable", type: "string", value: node.string };
+    }
+  }
+
+  // Recursively evaluates a node in the AST and returns the result, along with
   // performing any side effects.
-  evaluate(node: unknown): RuntimeToken {
+  evaluate(node: StatementNode): RuntimeToken {
     if (node === null || node === undefined) {
       return {
         nodeType: "variable",
@@ -634,34 +647,7 @@ class Engine {
 
     switch (node.nodeType) {
       case "literal": {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        return this.evaluate(node.literal);
-      }
-      case "int": {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        return node.int;
-      }
-      case "char": {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        return node.char;
-      }
-      case "double": {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        return node.double;
-      }
-      case "string": {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        return node.string;
-      }
-      case "statement": {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        return this.evaluate(node.statement);
+        return this.evaluateLiteral(node.literal);
       }
       case "identifier": {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
