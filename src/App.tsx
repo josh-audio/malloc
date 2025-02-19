@@ -50,7 +50,7 @@ const App = observer(() => {
           setIsDragActive(true);
         }}
         style={{
-          height: 6,
+          height: 4,
         }}
       />
       <CommandArea height={commandHeight} />

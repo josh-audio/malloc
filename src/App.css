@@ -5,7 +5,7 @@ html, body, #root {
 }
 
 body {
-  padding-top: 10px;
+  padding-top: 8px;
 }
 
 /* https://stackoverflow.com/questions/826782/how-to-disable-text-selection-highlighting */
@@ -28,17 +28,17 @@ html {
 }
 
 .mainContent {
-  border-bottom: 3px solid #444;
+  border-bottom: 2px solid #444;
 }
 
 .spacer {
   background-color: #333;
   cursor: ns-resize;
-  min-height: 6px;
+  min-height: 4px;
 }
 
 .command-area {
-  border-top: 3px solid #444;
+  border-top: 2px solid #444;
   font-family: 'Source Code Pro', monospace;
   padding-right: 50px;
   padding-left: 50px;
@@ -49,15 +49,15 @@ html {
 .command-input-container {
   display: flex;
   flex-direction: row;
-  height: 50px;
-  line-height: 30px;
-  font-size: 30px;
+  height: 40px;
+  line-height: 25px;
+  font-size: 25px;
 }
 
 .command-input {
   flex: 1;
   position: relative;
-  padding-left: 10px;
+  padding-left: 8px;
 }
 
 .command-input input {
@@ -70,7 +70,7 @@ html {
   caret-color: #FFF8;
   border: 0;
   outline: none;
-  margin-top: -11.5px; /* ok but why */
+  margin-top: -8.5px; /* ok but why */
 }
 
 .command-input input::selection {
@@ -84,14 +84,14 @@ html {
 .command-history-container {
   flex: 1;
   overflow-y: auto;
-  margin-top: 10px;
-  padding-right: 10px;
+  margin-top: 8px;
+  padding-right: 8px;
   white-space: pre;
 }
 
 .command-history-item {
-  padding-top: 10px;
-  margin-bottom: 10px;
+  padding-top: 8px;
+  margin-bottom: 8px;
   margin-left: 32px;
   border-top: 1px solid #FFF3;
 }
@@ -127,8 +127,8 @@ html {
 /* Generated webkit scrollbars. I tried and gave up on a custom scrollbar component for React. */
 
 ::-webkit-scrollbar {
-  width: 3px;
-  height: 3px;
+  width: 2px;
+  height: 2px;
 }
 ::-webkit-scrollbar-button {
   width: 0;
@@ -157,18 +157,18 @@ html {
 /* Memory area styling */
 
 .memory-container {
-  margin: 10px;
+  margin: 8px;
 }
 
 .cell-container {
   display: inline-block;
-  width: 25px;
-  height: 25px;
-  line-height: 25px;
-  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  font-size: 15px;
   text-align: center;
-  margin-bottom: 10px;
-  padding: 10px;
+  margin-bottom: 8px;
+  padding: 8px;
   border-left: 1px solid #ffffff08;
   border-top: 1px solid #ffffff08;
   border-bottom: 1px solid #ffffff08;
@@ -180,7 +180,7 @@ html {
 .cell-container:first-child {
   border-top-left-radius: 5px;
   border-bottom-left-radius: 5px;
-  padding-left: 10px;
+  padding-left: 8px;
 }
 
 .cell-container:last-child {
