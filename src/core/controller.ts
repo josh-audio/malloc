@@ -1,6 +1,6 @@
 import nearley from "nearley";
 import state from "../state/state";
-import engine from "./engine";
+import engine from "./runtime/engine";
 import grammar from "./grammar";
 import statementSchema from "./grammar_output_validator";
 
@@ -90,6 +90,7 @@ class Controller {
     if (!syntaxError) {
       try {
         if (parser.results.length !== 1) {
+          console.log(parser.results);
           throw new Error("Internal error: Unexpected parser output.");
         }
 
@@ -99,8 +100,18 @@ class Controller {
 
         let outputResult: string | undefined;
 
-        if (result === undefined) {
-          outputResult = "void";
+        if (result.nodeType === "void") {
+          outputResult = "[void]";
+        } else if (result.nodeType === "literal") {
+          if (result.literal.nodeType === "char") {
+            outputResult = `'${result.literal.char}'`;
+          } else if (result.literal.nodeType === "string") {
+            outputResult = `"${result.literal.string}"`;
+          } else if (result.literal.nodeType === "int") {
+            outputResult = result.literal.int;
+          } else if (result.literal.nodeType === "double") {
+            outputResult = result.literal.double;
+          }
         }
 
         historyToAdd.push({
@@ -115,8 +126,10 @@ class Controller {
         if (ex.name === "ZodError") {
           historyToAdd.push({
             style: "error",
-            text: "Internal validation error: The output from the grammar did not match the schema.\nThis is a bug.",
+            text: "Internal validation error: The output from the grammar did not match the schema.",
           });
+          console.log(parser.results[0]);
+          console.log(ex);
         } else {
           historyToAdd.push({
             style: "error",
