@@ -28,7 +28,6 @@ class Controller {
     const oneArgumentFunctions = [
       "malloc",
       "free",
-      "setMemorySize",
       "sizeof",
       "setAllocationMethod",
     ];

@@ -106,7 +106,6 @@ class Engine {
             "  - free(int)\n" +
             "  - freeAll()\n" +
             "  - coalesce()\n" +
-            "  - setMemorySize(int)\n" +
             "  - sizeof(any)\n" +
             '  - setAllocationMethod("best fit" | "worst fit" | "first fit")\n' +
             "  - getAllocationMethod()\n" +
@@ -193,19 +192,6 @@ class Engine {
             count++;
           }
 
-          return {
-            nodeType: "variable",
-            type: "void",
-          };
-        },
-      },
-      setMemorySize: {
-        nodeType: "variable",
-        type: "function",
-        value: (argument) => {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          this.setMemorySize(argument);
           return {
             nodeType: "variable",
             type: "void",
@@ -485,46 +471,6 @@ class Engine {
       }
       state.heap[i].isAllocated = false;
     }
-  }
-
-  setMemorySize(size: number) {
-    if (size < 1) {
-      throw new Error(
-        "Runtime exception in setMemorySize(): Memory size must be at least 1."
-      );
-    }
-
-    if (size === state.memorySize) {
-      return;
-    } else if (size > state.memorySize) {
-      for (let i = 0; i < size - state.memorySize; i++) {
-        if (i === 0 && state.heap[state.memorySize - 1].isAllocated) {
-          state.heap.push({
-            isAllocated: false,
-            isReserved: true,
-            value: 0,
-          });
-        } else {
-          state.heap.push({
-            isAllocated: false,
-            isReserved: false,
-            value: 0,
-          });
-        }
-      }
-    } else {
-      state.heap = state.heap.slice(0, size);
-
-      for (let i = state.heap.length - 1; i >= 0; i--) {
-        if (state.heap[i].isReserved) {
-          // state.heap[i].next = undefined;
-          // TODO: This is definitely not valid
-          break;
-        }
-      }
-    }
-
-    state.memorySize = size;
   }
 
   coalesce() {
