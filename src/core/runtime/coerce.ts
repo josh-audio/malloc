@@ -1,4 +1,4 @@
-import { LiteralNode } from "../grammar_output_validator";
+import { LiteralNode, TypeNode } from "../grammar_output_validator";
 
 const coerceToInt = (value: LiteralNode): LiteralNode => {
   if (value.literal.nodeType === "int") {
@@ -88,4 +88,18 @@ const coerceToString = (value: LiteralNode): LiteralNode => {
   }
 };
 
-export { coerceToInt, coerceToDouble, coerceToChar, coerceToString };
+const coerce = (value: LiteralNode, type: TypeNode): LiteralNode => {
+  if (type.type === "int") {
+    return coerceToInt(value);
+  } else if (type.type === "double") {
+    return coerceToDouble(value);
+  } else if (type.type === "char") {
+    return coerceToChar(value);
+  } else if (type.type === "string") {
+    return coerceToString(value);
+  } else {
+    throw Error(`Internal error: Unexpected type node type ${type.nodeType}.`);
+  }
+};
+
+export { coerceToInt, coerceToDouble, coerceToChar, coerceToString, coerce };
