@@ -2,11 +2,9 @@ import { useEffect, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { uniqueId } from "lodash";
+import controller from "../core/controller";
 
-function CommandInput(props: {
-  getPrediction: (command: string) => string;
-  onCommand: (command: string) => void;
-}) {
+function CommandInput() {
   const [id] = useState(uniqueId("command-input-"));
 
   const [text, setText] = useState("");
@@ -46,7 +44,7 @@ function CommandInput(props: {
         <div className="code-render">
           <span style={{ opacity: 0.5 }}>
             <SyntaxHighlighter language="c" style={atomDark}>
-              {props.getPrediction(text)}
+              {controller.getPrediction(text)}
             </SyntaxHighlighter>
           </span>
         </div>
@@ -73,14 +71,14 @@ function CommandInput(props: {
           onKeyDown={(e) => {
             if (e.key === "Tab") {
               e.preventDefault();
-              const prediction = props.getPrediction(text);
+              const prediction = controller.getPrediction(text);
               setText(prediction);
             } else if (e.key === "Enter") {
               if (text === "") {
                 return;
               }
               setInputHistory([...inputHistory, text]);
-              props.onCommand(text);
+              controller.executeStatement(text);
               setText("");
               setHistoryIdx(-1);
             } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
