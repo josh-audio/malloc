@@ -101,7 +101,7 @@ class Controller {
         let outputResult: string | undefined;
 
         if (result.nodeType === "void") {
-          outputResult = "[void]";
+          outputResult = "void";
         } else if (result.nodeType === "literal") {
           if (result.literal.nodeType === "char") {
             outputResult = `'${result.literal.char}'`;
