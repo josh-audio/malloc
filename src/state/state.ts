@@ -20,6 +20,14 @@ class State {
   }
 
   constructor() {
+    for (let i = 0; i < this.memorySize; i++) {
+      this.heap.push({
+        isAllocated: false,
+        isReserved: false,
+        value: 0,
+      });
+    }
+
     makeAutoObservable(this);
   }
 }

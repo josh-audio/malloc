@@ -1,6 +1,6 @@
 import nearley from "nearley";
 import state from "../state/state";
-import engine from "./engine_old";
+import engine from "./engine";
 import grammar from "./grammar";
 import statementSchema from "./grammar_output_validator";
 
@@ -10,8 +10,7 @@ class Controller {
     const spaceLastWord = spaceSplit[spaceSplit.length - 1];
 
     const parenthesisSplit = input.split("(");
-    const parenthesisLastWord =
-      parenthesisSplit[parenthesisSplit.length - 1];
+    const parenthesisLastWord = parenthesisSplit[parenthesisSplit.length - 1];
 
     if (spaceLastWord === "" || parenthesisLastWord === "") {
       return input;
@@ -32,16 +31,16 @@ class Controller {
       "setAllocationMethod",
     ];
 
-    const identifiers = engine.getIdentifiers();
-    const functions = engine.getFunctions();
+    // const identifiers: string[] = engine.getIdentifiers();
+    // const functions: string[] = engine.getFunctions();
+    const identifiers: string[] = [];
+    const functions: string[] = [];
 
     let predictions = oneArgumentFunctions
       .map((elem) => elem + "(")
       .concat(zeroArgumentFunctions.map((elem) => elem + "()"))
       .concat(
-        identifiers.filter(
-          (identifier) => !functions.includes(identifier)
-        )
+        identifiers.filter((identifier) => !functions.includes(identifier))
       );
 
     predictions = predictions.sort();
@@ -68,9 +67,7 @@ class Controller {
       text: statement,
     });
 
-    const parser = new nearley.Parser(
-      nearley.Grammar.fromCompiled(grammar)
-    );
+    const parser = new nearley.Parser(nearley.Grammar.fromCompiled(grammar));
 
     let syntaxError = false;
 
@@ -102,23 +99,6 @@ class Controller {
 
         let outputResult: string | undefined;
 
-        if (result !== undefined && result.toString() !== "") {
-          if (result.nodeType === "variable") {
-            if (result.type !== "void") {
-              outputResult = result.value.toString();
-            }
-          } else if (result.nodeType === "type") {
-            outputResult = result.type;
-          } else if (result.nodeType === "action") {
-            if (result.action === "clearConsole") {
-              state.resetCommandHistory();
-              return;
-            } else {
-              throw new Error("Internal error: Unsupported UI action.");
-            }
-          }
-        }
-
         if (result === undefined) {
           outputResult = "void";
         }
@@ -132,16 +112,64 @@ class Controller {
           throw ex;
         }
 
-        historyToAdd.push({
-          style: "error",
-          text: ex.message,
-        });
+        if (ex.name === "ZodError") {
+          historyToAdd.push({
+            style: "error",
+            text: "Internal validation error: The output from the grammar did not match the schema.\nThis is a bug.",
+          });
+        } else {
+          historyToAdd.push({
+            style: "error",
+            text: ex.message,
+          });
+        }
       }
     }
 
     for (const historyItem of historyToAdd) {
       state.commandHistory.push(historyItem);
     }
+  }
+
+  // Gets the state for the UI
+  //
+  // Would be nice to refactor this a bit
+  getState(): {
+    blocks: {
+      isAllocated: boolean;
+      cells: {
+        isAllocated: boolean;
+        isReserved: boolean;
+        value: number;
+        index: number;
+      }[];
+    }[];
+  } {
+    const result: ReturnType<Controller["getState"]> = { blocks: [] };
+
+    let block: ReturnType<Controller["getState"]>["blocks"][number] | undefined;
+    let createNewBlock = true;
+
+    for (let i = 0; i < state.heap.length; i++) {
+      if (createNewBlock) {
+        if (block !== undefined) {
+          result.blocks.push(block);
+        }
+
+        block = { cells: [], isAllocated: state.heap[i].isAllocated };
+      }
+
+      block!.cells.push({ ...state.heap[i], index: i });
+
+      createNewBlock =
+        i + 1 < state.heap.length && state.heap[i + 1].isReserved;
+    }
+
+    if (block !== undefined) {
+      result.blocks.push(block);
+    }
+
+    return result;
   }
 }
 
