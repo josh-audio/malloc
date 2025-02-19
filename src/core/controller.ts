@@ -79,12 +79,21 @@ class Controller {
       }
 
       syntaxError = true;
-      historyToAdd.push({
-        style: "error",
-        text: ex.message
-          .slice(0, ex.message.search("Instead, "))
-          .replace(/line [0-9]+ /, ""),
-      });
+
+      if (ex.message.includes("Syntax error")) {
+        historyToAdd.push({
+          style: "error",
+          text: ex.message
+            .slice(0, ex.message.search("Instead, "))
+            .replace(/line [0-9]+ /, ""),
+        });
+      } else {
+        historyToAdd.push({
+          style: "error",
+          text: ex.message,
+        });
+      }
+      console.log(ex);
     }
 
     if (!syntaxError) {

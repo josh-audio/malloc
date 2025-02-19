@@ -1,5 +1,11 @@
-import { LiteralNode, StatementNode } from "../grammar_output_validator";
+import state from "../../state/state";
+import {
+  DeclarationNode,
+  LiteralNode,
+  StatementNode,
+} from "../grammar_output_validator";
 import { coerce } from "./coerce";
+import { mallocImpl } from "./malloc_impl";
 import {
   coerceOperatorDivide,
   coerceOperatorMinus,
@@ -11,17 +17,66 @@ type VoidNode = {
   nodeType: "void";
 };
 
+// Defines a function that is implemented in native JavaScript.
+type NativeFunctionDefinitionNode = {
+  nodeType: "nativeFunctionDefinition";
+  arguments: DeclarationNode[];
+  body: (args: LiteralNode[]) => LiteralNode | VoidNode;
+};
+
+type Scope = Record<string, LiteralNode | NativeFunctionDefinitionNode>;
+
 class Engine {
-  globalScope: Record<string, LiteralNode> = {};
+  globalScope: Scope = {
+    malloc: {
+      nodeType: "nativeFunctionDefinition",
+      arguments: [
+        {
+          nodeType: "declaration",
+          declaration: {
+            nodeType: "singleDeclaration",
+            identifier: {
+              nodeType: "identifier",
+              identifier: "size",
+            },
+            type: {
+              nodeType: "type",
+              type: "int",
+            },
+          },
+        },
+      ],
+      body: (args: LiteralNode[]) => mallocImpl(engine.globalScope, args),
+    },
+    clear: {
+      nodeType: "nativeFunctionDefinition",
+      arguments: [],
+      body: () => {
+        state.commandHistory = [];
+        return { nodeType: "void" };
+      },
+    },
+  };
 
   // Recursively evaluates the given statement. Returns a literal node if the
   // statement evaluates to a value, otherwise returns a void node.
-  evaluate(statement: StatementNode): LiteralNode | VoidNode {
+  evaluate(
+    statement: StatementNode
+  ): LiteralNode | NativeFunctionDefinitionNode | VoidNode {
     if (statement.nodeType === "literal") {
       return statement;
     } else if (statement.nodeType === "operator") {
       const left = this.evaluate(statement.left);
       const right = this.evaluate(statement.right);
+
+      if (
+        left.nodeType === "nativeFunctionDefinition" ||
+        right.nodeType === "nativeFunctionDefinition"
+      ) {
+        throw new Error(
+          `Type error: Invalid type "native function" for operator ${statement.operator}.`
+        );
+      }
 
       if (left.nodeType === "void") {
         throw new Error(
@@ -47,9 +102,15 @@ class Engine {
     } else if (statement.nodeType === "cast") {
       const result = this.evaluate(statement.statement);
 
+      if (result.nodeType === "nativeFunctionDefinition") {
+        throw new Error(
+          `Type error: Type "native function" cannot be cast to ${statement.type.type}.`
+        );
+      }
+
       if (result.nodeType === "void") {
         throw new Error(
-          `Runtime error: Cannot cast void to ${statement.type.type}.`
+          `Runtime error: Type "void" cannot be cast to ${statement.type.type}.`
         );
       }
 
@@ -98,7 +159,9 @@ class Engine {
       const value = this.globalScope[statement.identifier];
 
       if (value === undefined) {
-        throw new Error(`Runtime error: Identifier ${statement.identifier} is not defined.`);
+        throw new Error(
+          `Runtime error: Identifier ${statement.identifier} is not defined.`
+        );
       }
 
       return value;
@@ -119,12 +182,51 @@ class Engine {
       if (statement.left.nodeType === "identifier") {
         this.globalScope[statement.left.identifier] = value;
       } else if (statement.left.nodeType === "declaration") {
-        this.globalScope[statement.left.declaration.identifier.identifier] = value;
+        this.globalScope[statement.left.declaration.identifier.identifier] =
+          value;
       } else {
-        throw new Error(`Internal error: Unexpected assignment left-hand side node type.`);
+        throw new Error(
+          `Internal error: Unexpected assignment left-hand side node type.`
+        );
       }
 
       return value;
+    } else if (statement.nodeType === "functionCall") {
+      const func = this.evaluate(statement.functionName);
+
+      if (func.nodeType === "nativeFunctionDefinition") {
+        const args = statement.arguments
+          .map((arg) => this.evaluate(arg))
+          .filter((arg) => arg.nodeType === "literal");
+
+        // Validate argument count
+        if (args.length !== func.arguments.length) {
+          throw new Error(
+            `Type error: Expected ${func.arguments.length} argument${
+              func.arguments.length === 1 ? "" : "s"
+            } for function ${statement.functionName.identifier}, but got ${
+              args.length
+            }.`
+          );
+        }
+
+        // Validate argument types
+        for (let i = 0; i < args.length; i++) {
+          if (
+            args[i].literal.nodeType !== func.arguments[i].declaration.type.type
+          ) {
+            throw new Error(
+              `Type error: ${statement.functionName.identifier}: Expected argument ${i} to be of type ${func.arguments[i].declaration.type.type}, but got ${args[i].literal.nodeType}.`
+            );
+          }
+        }
+
+        return func.body(args);
+      } else {
+        throw new Error(
+          `Type error: Identifier ${statement.functionName.identifier} is not a function.`
+        );
+      }
     }
 
     throw Error("Internal error: Unexpected statement node type.");
@@ -134,3 +236,4 @@ class Engine {
 const engine = new Engine();
 
 export default engine;
+export type { Scope };

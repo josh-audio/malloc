@@ -130,10 +130,19 @@ const grammar: nearley.CompiledRules = {
     {"name": "function_call$subexpression$1", "symbols": ["_"]},
     {"name": "function_call", "symbols": ["identifier", "_", {"literal":"("}, "_", "function_call$subexpression$1", "_", {"literal":")"}], "postprocess": 
         function(data) {
+          const arg = data[4][0];
+          if (arg?.nodeType === undefined) {
+            return {
+              nodeType: 'functionCall',
+              functionName: data[0],
+              arguments: []
+            }
+          }
+        
           return {
             nodeType: 'functionCall',
             functionName: data[0],
-            argument: data[4]
+            arguments: [data[4][0]]
           }
         }
         },

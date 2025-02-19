@@ -97,10 +97,19 @@ assignment -> (declaration | identifier | array_index) _ "=" _ statement {%
 
 function_call -> identifier _ "(" _ ( statement | _ ) _ ")" {%
   function(data) {
+    const arg = data[4][0];
+    if (arg?.nodeType === undefined) {
+      return {
+        nodeType: 'functionCall',
+        functionName: data[0],
+        arguments: []
+      }
+    }
+
     return {
       nodeType: 'functionCall',
       functionName: data[0],
-      argument: data[4]
+      arguments: [data[4][0]]
     }
   }
 %}
