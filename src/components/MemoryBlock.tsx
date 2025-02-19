@@ -1,8 +1,11 @@
 import MemoryCell from "./MemoryCell.tsx";
 
-function MemoryBlock(props: {
-  blockState: { cells: { index: number; isAllocated: boolean; isReserved: boolean }[] };
-}) {
+const MemoryBlock = (props: {
+  blockState: {
+    cells: { index: number; isAllocated: boolean; isReserved: boolean }[];
+  };
+}) => {
+  console.log(props.blockState);
   return (
     <span className="memory-block-container">
       {props.blockState.cells.map((cell, index) => {
@@ -10,6 +13,6 @@ function MemoryBlock(props: {
       })}
     </span>
   );
-}
+};
 
 export default MemoryBlock;

@@ -1,22 +1,17 @@
-import React from "react";
-import MemoryBlock from "./MemoryBlock.js";
+import { observer } from "mobx-react";
+import controller from "../core/controller";
+import MemoryBlock from "./MemoryBlock";
 
-function MemoryVisualizer(
-  props: {
-    memState: {
-      blocks: {
-        cells: { index: number; isAllocated: boolean; isReserved: boolean }[];
-      }[];
-    };
-  } & React.HTMLAttributes<HTMLDivElement>
-) {
+const MemoryVisualizer = observer(() => {
+  const memoryState = controller.getState();
+
   return (
     <div className="memory-container">
-      {props.memState.blocks.map((elem, index) => {
+      {memoryState.blocks.map((elem, index) => {
         return <MemoryBlock key={index} blockState={elem} />;
       })}
     </div>
   );
-}
+});
 
 export default MemoryVisualizer;

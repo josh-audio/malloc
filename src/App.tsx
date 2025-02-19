@@ -2,15 +2,12 @@ import { useState } from "react";
 import "./App.css";
 import CommandArea from "./components/CommandArea.tsx";
 import MemoryVisualizer from "./components/MemoryVisualizer.tsx";
-import engine from "./core/engine_old.ts";
 import state from "./state/state.ts";
 import { observer } from "mobx-react";
 
 const App = observer(() => {
   const [commandHeight, setCommandHeight] = useState(300);
   const [isDragActive, setIsDragActive] = useState(false);
-
-  const uiState = engine.getState();
 
   const handleMouseMove = (event: React.MouseEvent) => {
     if (!isDragActive) {
@@ -42,7 +39,7 @@ const App = observer(() => {
     >
       {state.heap.filter((elem) => elem.isAllocated).length}
       <div className="mainContent" style={{ flex: 1 }}>
-        <MemoryVisualizer memState={uiState} />
+        <MemoryVisualizer />
       </div>
       <div
         className="spacer"
