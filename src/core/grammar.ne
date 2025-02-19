@@ -4,7 +4,7 @@ Main -> ((statement _) | (statement _ ";")) {%
   }
 %}
 
-statement -> (literal | identifier | assignment | function_call | declaration | cast | array_index | operator | parenthesis | _) {%
+statement -> (literal | identifier | assignment | function_call | declaration | cast | array_index | operator | parenthesis ) {%
   function(data) {
     return data[0][0]
   }
@@ -95,7 +95,7 @@ assignment -> (declaration | identifier | array_index) _ "=" _ statement {%
   }
 %}
 
-function_call -> identifier _ "(" _ statement _ ")" {%
+function_call -> identifier _ "(" _ ( statement | _ ) _ ")" {%
   function(data) {
     return {
       nodeType: 'functionCall',
