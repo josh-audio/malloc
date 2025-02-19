@@ -1,7 +1,6 @@
 // Generated automatically by nearley, version 2.20.1
 // http://github.com/Hardmath123/nearley
 /* eslint-disable no-useless-escape */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 const grammar: nearley.CompiledRules = {
     Lexer: undefined,
     ParserRules: [
@@ -59,7 +58,7 @@ const grammar: nearley.CompiledRules = {
     {"name": "double$ebnf$1", "symbols": [/[0-9]/]},
     {"name": "double$ebnf$1", "symbols": ["double$ebnf$1", /[0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "double$ebnf$2", "symbols": []},
-    {"name": "double$ebnf$2", "symbols": ["double$ebnf$2", /[^']/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "double$ebnf$2", "symbols": ["double$ebnf$2", /[0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "double", "symbols": ["double$ebnf$1", {"literal":"."}, "double$ebnf$2"], "postprocess": 
         function(data) {
           return {

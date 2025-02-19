@@ -34,7 +34,7 @@ int -> (intDecimal | intHex) {%
   }
 %}
 
-double -> [0-9]:+ "." [^']:* {%
+double -> [0-9]:+ "." [0-9]:* {%
   function(data) {
     return {
       nodeType: 'double',
