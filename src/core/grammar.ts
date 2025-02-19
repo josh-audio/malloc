@@ -111,7 +111,7 @@ const grammar: nearley.CompiledRules = {
     {"name": "_$ebnf$1", "symbols": []},
     {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", /[ ]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": 
-        function(data) {
+        function() {
           return null;
         }
         },

@@ -12,7 +12,6 @@ try {
 
   // Insert variable declaration after line 2
   lines.splice(2, 0, `/* eslint-disable no-useless-escape */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 const grammar: nearley.CompiledRules = {`);
 
   // Insert export statement at the end
