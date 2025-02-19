@@ -2,7 +2,7 @@ import { useState } from "react";
 import "./App.css";
 import CommandArea from "./components/CommandArea.tsx";
 import MemoryVisualizer from "./components/MemoryVisualizer.tsx";
-import engine from "./core/engine.ts";
+import engine from "./core/engine_old.ts";
 import state from "./state/state.ts";
 import { observer } from "mobx-react";
 

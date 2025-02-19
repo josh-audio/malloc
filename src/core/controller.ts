@@ -1,6 +1,6 @@
 import nearley from "nearley";
 import state from "../state/state";
-import engine from "./engine";
+import engine from "./engine_old";
 import grammar from "./grammar";
 import statementSchema from "./grammar_output_validator";
 
