@@ -31,7 +31,7 @@ const rules: nearley.CompiledRules = {
     { name: "statement$subexpression$1", symbols: ["literal"] },
     { name: "statement$subexpression$1", symbols: ["identifier"] },
     { name: "statement$subexpression$1", symbols: ["assignment"] },
-    { name: "statement$subexpression$1", symbols: ["functionCall"] },
+    { name: "statement$subexpression$1", symbols: ["function_call"] },
     { name: "statement$subexpression$1", symbols: ["declaration"] },
     { name: "statement$subexpression$1", symbols: ["cast"] },
     { name: "statement$subexpression$1", symbols: ["array_index"] },
@@ -226,7 +226,7 @@ const rules: nearley.CompiledRules = {
       },
     },
     {
-      name: "functionCall",
+      name: "function_call",
       symbols: [
         "identifier",
         "_",
@@ -505,11 +505,11 @@ const rules: nearley.CompiledRules = {
     },
     { name: "operator$subexpression$1", symbols: ["literal"] },
     { name: "operator$subexpression$1", symbols: ["identifier"] },
-    { name: "operator$subexpression$1", symbols: ["functionCall"] },
+    { name: "operator$subexpression$1", symbols: ["function_call"] },
     { name: "operator$subexpression$1", symbols: ["parenthesis"] },
     { name: "operator$subexpression$2", symbols: ["literal"] },
     { name: "operator$subexpression$2", symbols: ["identifier"] },
-    { name: "operator$subexpression$2", symbols: ["functionCall"] },
+    { name: "operator$subexpression$2", symbols: ["function_call"] },
     { name: "operator$subexpression$2", symbols: ["parenthesis"] },
     {
       name: "operator",

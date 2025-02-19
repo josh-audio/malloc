@@ -4,7 +4,7 @@ Main -> ((statement _) | (statement _ ";")) {%
   }
 %}
 
-statement -> (literal | identifier | assignment | functionCall | declaration | cast | array_index | operator | parenthesis | _) {%
+statement -> (literal | identifier | assignment | function_call | declaration | cast | array_index | operator | parenthesis | _) {%
   function(data) {
     return data[0][0]
   }
@@ -23,7 +23,7 @@ intHex -> "0x" [0-9a-fA-F]:+ {%
   function(data) {
     return {
       nodeType: 'int',
-      int: parseInt(data[1].join().replace(/,/g, ''), 16).toString(10)
+      int: parseInt(data[1].join().replace(/,/g, ''), 16).toString()
     }
   }
 %}
@@ -95,7 +95,7 @@ assignment -> (declaration | identifier | array_index) _ "=" _ statement {%
   }
 %}
 
-functionCall -> identifier _ "(" _ statement _ ")" {%
+function_call -> identifier _ "(" _ statement _ ")" {%
   function(data) {
     return {
       nodeType: 'functionCall',
@@ -171,7 +171,7 @@ cast -> "(" _ type _ ")" _ statement {%
   }
 %}
 
-operator -> (literal | identifier | functionCall | parenthesis) _ [+\-*\/] _ (literal | identifier | functionCall | parenthesis) {%
+operator -> (literal | identifier | function_call | parenthesis) _ [+\-*\/] _ (literal | identifier | function_call | parenthesis) {%
   function(data) {
     return {
       nodeType: 'operator',
