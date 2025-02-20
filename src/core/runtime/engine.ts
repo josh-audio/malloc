@@ -273,9 +273,9 @@ class Engine {
 
         if (heapValueRaw < 0) {
           const value = Math.abs(heapValueRaw) % 256;
-          state.heap[address].value = 256 - value;
+          state.heap[address] = 256 - value;
         } else {
-          state.heap[address].value = heapValueRaw % 256;
+          state.heap[address] = heapValueRaw % 256;
         }
 
         return coerced;
@@ -344,7 +344,7 @@ class Engine {
 
       const value: LiteralNode = {
         nodeType: "literal",
-        literal: { nodeType: "int", int: state.heap[address].value.toString() },
+        literal: { nodeType: "int", int: state.heap[address].toString() },
       };
 
       if (variable.type.type === "int*") {

@@ -12,7 +12,7 @@ const MemoryCell = observer(
       address = address.padStart(2, "0");
     }
 
-    let value = state.heap[props.cellState.index].value.toString(base).toUpperCase();
+    let value = state.heap[props.cellState.index].toString(base).toUpperCase();
     if (base === 16) {
       value = value.padStart(2, "0");
     }

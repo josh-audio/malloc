@@ -18,7 +18,7 @@ class State {
   displayBase: 10 | 16 = 16;
 
   memorySize: number = 256;
-  heap: { isAllocated: boolean; isReserved: boolean; value: number }[] = [];
+  heap: number[] = [];
 
   // Styles:
   //  - command (for actual commands)
@@ -32,11 +32,7 @@ class State {
 
   constructor() {
     for (let i = 0; i < this.memorySize; i++) {
-      this.heap.push({
-        isAllocated: false,
-        isReserved: false,
-        value: 0,
-      });
+      this.heap.push(0);
     }
 
     makeAutoObservable(this);

@@ -162,18 +162,26 @@ class Controller {
     let createNewBlock = true;
 
     for (let i = 0; i < state.heap.length; i++) {
-      if (createNewBlock) {
+      // The first 2 cells are reserved by the simulator, and should be in their
+      // own group:
+      // 0. The null pointer
+      // 1. The free list pointer
+      if (createNewBlock || i === 2) {
         if (block !== undefined) {
           result.blocks.push(block);
         }
 
-        block = { cells: [], isAllocated: state.heap[i].isAllocated };
+        block = { cells: [], isAllocated: i < 2 };
       }
 
-      block!.cells.push({ ...state.heap[i], index: i });
+      block!.cells.push({
+        value: state.heap[i],
+        index: i,
+        isAllocated: false,
+        isReserved: i < 2,
+      });
 
-      createNewBlock =
-        i + 1 < state.heap.length && state.heap[i + 1].isReserved;
+      createNewBlock = false; // TODO - We'll need to eventually read the free list to know when to create a new block
     }
 
     if (block !== undefined) {
