@@ -30,7 +30,7 @@ identifier -> [a-zA-Z_] [a-zA-Z0-9_]:* {%
   }
 %}
 
-assignment -> (declaration | identifier | array_index) _ "=" _ statement {%
+assignment -> (declaration | identifier | array_index | dereference) _ "=" _ statement {%
   function(data) {
     return {
       nodeType: 'assignment',

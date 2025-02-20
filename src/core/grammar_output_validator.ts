@@ -90,13 +90,13 @@ type ArrayIndexNode = {
 const assignmentSchema: ZodType<AssignmentNode> = z.lazy(() =>
   z.object({
     nodeType: z.literal("assignment"),
-    left: z.union([declarationSchema, identifierSchema, arrayIndexSchema]),
+    left: z.union([declarationSchema, identifierSchema, arrayIndexSchema, dereferenceSchema]),
     right: statementSchema,
   })
 );
 type AssignmentNode = {
   nodeType: "assignment";
-  left: DeclarationNode | IdentifierNode | ArrayIndexNode;
+  left: DeclarationNode | IdentifierNode | ArrayIndexNode | DereferenceNode;
   right: StatementNode;
 };
 

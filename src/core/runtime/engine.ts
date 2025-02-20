@@ -1,6 +1,7 @@
 import state from "../../state/state";
 import {
   DeclarationNode,
+  DereferenceNode,
   LiteralNode,
   StatementNode,
   TypeNode,
@@ -232,9 +233,19 @@ class Engine {
 
       return value.value;
     } else if (statement.nodeType === "assignment") {
+      let address: number | undefined;
+
       // Evaluate the declaration
       if (statement.left.nodeType === "declaration") {
         this.evaluate(statement.left);
+      } else if (statement.left.nodeType === "dereference") {
+        address = this.getDereferenceAddress(statement.left);
+
+        if (address < 0 || address >= state.heap.length) {
+          throw new Error(
+            `Runtime error: Address ${address} is outside of the addressable memory range.`
+          );
+        }
       }
 
       // Evaluate the right-hand side of the assignment
@@ -250,8 +261,18 @@ class Engine {
 
       let scopeItem: VariableNode;
 
+      if (address !== undefined) {
+        const coerced = coerce(value, { nodeType: "type", type: "int" });
+        if (coerced.literal.nodeType !== "int") {
+          throw new Error(
+            `Internal error: Expected coerced value to be of type "int", but got ${coerced.literal.nodeType}.`
+          );
+        }
+        state.heap[address].value = parseInt(coerced.literal.int);
+        return coerced;
+      }
       // Set the value in the global scope
-      if (statement.left.nodeType === "identifier") {
+      else if (statement.left.nodeType === "identifier") {
         scopeItem = this.globalScope[statement.left.identifier];
         scopeItem.value = coerce(value, scopeItem.type);
       } else if (statement.left.nodeType === "declaration") {
@@ -304,38 +325,7 @@ class Engine {
     } else if (statement.nodeType === "dereference") {
       const variable = this.globalScope[statement.identifier.identifier];
 
-      if (variable === undefined) {
-        throw new Error(
-          `Runtime error: Identifier ${statement.identifier.identifier} is not defined.`
-        );
-      }
-
-      if (variable.type.type === "nativeFunction") {
-        throw new Error(
-          `Type error: Cannot dereference native function ${statement.identifier.identifier}.`
-        );
-      }
-
-      if (variable.type.type[variable.type.type.length - 1] !== "*") {
-        throw new Error(
-          `Type error: Cannot dereference non-pointer type ${variable.type.type}.`
-        );
-      }
-
-      if (variable.value.nodeType !== "literal") {
-        throw new Error(
-          `Internal error: Expected variable value to be of type "literal", but got ${variable.value.nodeType}.`
-        );
-      }
-
-      const coercedValue = coerceToInt(variable.value).literal;
-      if (coercedValue.nodeType !== "int") {
-        throw new Error(
-          `Internal error: Expected coerced value to be of type "int", but got ${coercedValue.nodeType}.`
-        );
-      }
-
-      const address = parseInt(coercedValue.int);
+      const address = this.getDereferenceAddress(statement);
 
       if (address < 0 || address >= state.heap.length) {
         throw new Error(
@@ -347,7 +337,7 @@ class Engine {
         nodeType: "literal",
         literal: { nodeType: "int", int: state.heap[address].value.toString() },
       };
-      
+
       if (variable.type.type === "int*") {
         return value;
       } else if (variable.type.type === "char*") {
@@ -360,6 +350,45 @@ class Engine {
     }
 
     throw Error("Internal error: Unexpected statement node type.");
+  }
+
+  private getDereferenceAddress(statement: DereferenceNode): number {
+    const variable = this.globalScope[statement.identifier.identifier];
+
+    if (variable === undefined) {
+      throw new Error(
+        `Runtime error: Identifier ${statement.identifier.identifier} is not defined.`
+      );
+    }
+
+    if (variable.type.type === "nativeFunction") {
+      throw new Error(
+        `Type error: Cannot dereference native function ${statement.identifier.identifier}.`
+      );
+    }
+
+    if (variable.type.type[variable.type.type.length - 1] !== "*") {
+      throw new Error(
+        `Type error: Cannot dereference non-pointer type ${variable.type.type}.`
+      );
+    }
+
+    if (variable.value.nodeType !== "literal") {
+      throw new Error(
+        `Internal error: Expected variable value to be of type "literal", but got ${variable.value.nodeType}.`
+      );
+    }
+
+    const coercedValue = coerceToInt(variable.value).literal;
+    if (coercedValue.nodeType !== "int") {
+      throw new Error(
+        `Internal error: Expected coerced value to be of type "int", but got ${coercedValue.nodeType}.`
+      );
+    }
+
+    const address = parseInt(coercedValue.int);
+
+    return address;
   }
 }
 

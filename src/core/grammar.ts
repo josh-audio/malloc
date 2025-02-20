@@ -41,6 +41,7 @@ const grammar: nearley.CompiledRules = {
     {"name": "assignment$subexpression$1", "symbols": ["declaration"]},
     {"name": "assignment$subexpression$1", "symbols": ["identifier"]},
     {"name": "assignment$subexpression$1", "symbols": ["array_index"]},
+    {"name": "assignment$subexpression$1", "symbols": ["dereference"]},
     {"name": "assignment", "symbols": ["assignment$subexpression$1", "_", {"literal":"="}, "_", "statement"], "postprocess": 
         function(data) {
           return {
