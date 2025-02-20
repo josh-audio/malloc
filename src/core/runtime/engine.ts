@@ -268,7 +268,16 @@ class Engine {
             `Internal error: Expected coerced value to be of type "int", but got ${coerced.literal.nodeType}.`
           );
         }
-        state.heap[address].value = parseInt(coerced.literal.int);
+
+        const heapValueRaw = parseInt(coerced.literal.int);
+
+        if (heapValueRaw < 0) {
+          const value = Math.abs(heapValueRaw) % 256;
+          state.heap[address].value = 256 - value;
+        } else {
+          state.heap[address].value = heapValueRaw % 256;
+        }
+
         return coerced;
       }
       // Set the value in the global scope
