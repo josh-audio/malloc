@@ -5,7 +5,7 @@ import {
   StatementNode,
   TypeNode,
 } from "../grammar_output_validator";
-import { coerce } from "./coerce";
+import { coerce, coerceToChar, coerceToInt } from "./coerce";
 import { mallocImpl } from "./malloc_impl";
 import {
   coerceOperatorDivide,
@@ -255,9 +255,8 @@ class Engine {
         scopeItem = this.globalScope[statement.left.identifier];
         scopeItem.value = coerce(value, scopeItem.type);
       } else if (statement.left.nodeType === "declaration") {
-        scopeItem = this.globalScope[
-          statement.left.declaration.identifier.identifier
-        ];
+        scopeItem =
+          this.globalScope[statement.left.declaration.identifier.identifier];
         scopeItem.value = coerce(value, statement.left.declaration.type);
       } else {
         throw new Error(
@@ -300,6 +299,62 @@ class Engine {
       } else {
         throw new Error(
           `Type error: Identifier ${statement.functionName.identifier} is not a function.`
+        );
+      }
+    } else if (statement.nodeType === "dereference") {
+      const variable = this.globalScope[statement.identifier.identifier];
+
+      if (variable === undefined) {
+        throw new Error(
+          `Runtime error: Identifier ${statement.identifier.identifier} is not defined.`
+        );
+      }
+
+      if (variable.type.type === "nativeFunction") {
+        throw new Error(
+          `Type error: Cannot dereference native function ${statement.identifier.identifier}.`
+        );
+      }
+
+      if (variable.type.type[variable.type.type.length - 1] !== "*") {
+        throw new Error(
+          `Type error: Cannot dereference non-pointer type ${variable.type.type}.`
+        );
+      }
+
+      if (variable.value.nodeType !== "literal") {
+        throw new Error(
+          `Internal error: Expected variable value to be of type "literal", but got ${variable.value.nodeType}.`
+        );
+      }
+
+      const coercedValue = coerceToInt(variable.value).literal;
+      if (coercedValue.nodeType !== "int") {
+        throw new Error(
+          `Internal error: Expected coerced value to be of type "int", but got ${coercedValue.nodeType}.`
+        );
+      }
+
+      const address = parseInt(coercedValue.int);
+
+      if (address < 0 || address >= state.heap.length) {
+        throw new Error(
+          `Runtime error: Address ${address} in variable ${statement.identifier.identifier} is outside of the addressable memory range.`
+        );
+      }
+
+      const value: LiteralNode = {
+        nodeType: "literal",
+        literal: { nodeType: "int", int: state.heap[address].value.toString() },
+      };
+      
+      if (variable.type.type === "int*") {
+        return value;
+      } else if (variable.type.type === "char*") {
+        return coerceToChar(value);
+      } else {
+        throw new Error(
+          `Internal error: Unexpected pointer type ${variable.type.type}.`
         );
       }
     }

@@ -1,9 +1,8 @@
 // This file contains a Zod validator for the Nearley parser output.
 //
-// The Nearley output is being validated to ensure that the types we use in the
-// application to represent the parser output match the actual output of the
-// parser. This makes it easier to catch errors if the real parser output
-// changes but the application code is not updated to match.
+// Zod statically generates the types we use elsewhere in the application. As
+// long as the parser output passes validation at runtime, the types pulled from
+// this file will always be correct.
 
 import { z, ZodType } from "zod";
 
@@ -35,6 +34,10 @@ const typeSchema = z.object({
     z.literal("char*"),
     z.literal("void"),
     z.literal("void*"),
+
+    // The grammar should never output this, but this adds it to TypeNode.type
+    // so that we can use it in the runtime engine.
+    z.literal("nativeFunction"),
   ]),
 });
 type TypeNode = z.infer<typeof typeSchema>;
@@ -110,6 +113,17 @@ type CastNode = {
   statement: StatementNode;
 };
 
+const dereferenceSchema: ZodType<DereferenceNode> = z.lazy(() =>
+  z.object({
+    nodeType: z.literal("dereference"),
+    identifier: identifierSchema,
+  })
+);
+type DereferenceNode = {
+  nodeType: "dereference";
+  identifier: IdentifierNode;
+};
+
 const operatorSchema: ZodType<OperatorNode> = z.lazy(() => z.object({
   nodeType: z.literal("operator"),
   operator: z.union([
@@ -149,6 +163,8 @@ const statementSchema: ZodType<StatementNode> = z.lazy(() =>
     assignmentSchema,
     castSchema,
     operatorSchema,
+    parenthesisSchema,
+    dereferenceSchema,
   ])
 );
 type StatementNode =
@@ -160,7 +176,8 @@ type StatementNode =
   | AssignmentNode
   | CastNode
   | OperatorNode
-  | ParenthesisNode;
+  | ParenthesisNode
+  | DereferenceNode;
 
 export type {
   StatementNode,
@@ -174,5 +191,6 @@ export type {
   CastNode,
   OperatorNode,
   ParenthesisNode,
+  DereferenceNode,
 };
 export default statementSchema;

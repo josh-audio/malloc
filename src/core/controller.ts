@@ -17,7 +17,7 @@ class Controller {
     }
 
     let predictions = Object.keys(engine.globalScope).map((identifier) => {
-      const value = engine.globalScope[identifier];
+      const value = engine.globalScope[identifier].value;
 
       if (value.nodeType === "literal") {
         return identifier;

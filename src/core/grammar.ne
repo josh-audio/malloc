@@ -4,7 +4,18 @@ Main -> ((statement _) | (statement _ ";")) {%
   }
 %}
 
-statement -> (literal | identifier | assignment | function_call | declaration | cast | array_index | operator | parenthesis ) {%
+statement -> (
+  literal 
+  | identifier 
+  | assignment 
+  | function_call 
+  | declaration 
+  | cast 
+  | array_index 
+  | operator 
+  | parenthesis
+  | dereference
+) {%
   function(data) {
     return data[0][0]
   }
@@ -94,6 +105,15 @@ cast -> "(" _ type _ ")" _ statement {%
       nodeType: 'cast',
       type: data[2],
       statement: data[6]
+    }
+  }
+%}
+
+dereference -> "*" _ identifier {%
+  function(data) {
+    return {
+      nodeType: 'dereference',
+      identifier: data[2]
     }
   }
 %}

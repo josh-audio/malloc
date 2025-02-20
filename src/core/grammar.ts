@@ -22,6 +22,7 @@ const grammar: nearley.CompiledRules = {
     {"name": "statement$subexpression$1", "symbols": ["array_index"]},
     {"name": "statement$subexpression$1", "symbols": ["operator"]},
     {"name": "statement$subexpression$1", "symbols": ["parenthesis"]},
+    {"name": "statement$subexpression$1", "symbols": ["dereference"]},
     {"name": "statement", "symbols": ["statement$subexpression$1"], "postprocess": 
         function(data) {
           return data[0][0]
@@ -114,6 +115,14 @@ const grammar: nearley.CompiledRules = {
             nodeType: 'cast',
             type: data[2],
             statement: data[6]
+          }
+        }
+        },
+    {"name": "dereference", "symbols": [{"literal":"*"}, "_", "identifier"], "postprocess": 
+        function(data) {
+          return {
+            nodeType: 'dereference',
+            identifier: data[2]
           }
         }
         },
