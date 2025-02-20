@@ -1,12 +1,7 @@
 html, body, #root {
-  /* This is as awful as it looks, but I don't want to rework the layout right now */
-  height: 98%;
+  height: 100%;
   background-color: #222;
   color: #fff8;
-}
-
-body {
-  padding-top: 8px;
 }
 
 /* https://stackoverflow.com/questions/826782/how-to-disable-text-selection-highlighting */
@@ -28,8 +23,9 @@ html {
   height: 100%;
 }
 
-.mainContent {
+.main-content {
   border-bottom: 2px solid #444;
+  position: relative;
 }
 
 .spacer {
@@ -127,7 +123,7 @@ html {
 }
 
 
-/* Generated webkit scrollbars. I tried and gave up on a custom scrollbar component for React. */
+/* Scrollbar styling */
 
 ::-webkit-scrollbar {
   width: 2px;
@@ -160,7 +156,10 @@ html {
 /* Memory area styling */
 
 .memory-container {
-  margin: 16px;
+  padding: 16px 16px 0 16px;
+  position: absolute;
+  inset: 0;
+  overflow: auto;
 }
 
 .cell-container {

@@ -36,7 +36,7 @@ const App = observer(() => {
         setIsDragActive(false);
       }}
     >
-      <div className="mainContent" style={{ flex: 1 }}>
+      <div className="main-content" style={{ flex: 1 }}>
         <MemoryVisualizer />
       </div>
       <div
