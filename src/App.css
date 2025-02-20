@@ -169,7 +169,7 @@ html {
   line-height: 16px;
   font-size: 15px;
   text-align: center;
-  margin-bottom: 26px;
+  margin-bottom: 20px;
   padding: 8px;
   border-left: 1px solid #ffffff08;
   border-top: 1px solid #ffffff08;
@@ -179,6 +179,14 @@ html {
   color: #FFF7;
 
   position: relative;
+}
+
+.memory-value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .memory-address-parent {

@@ -25,7 +25,7 @@ const MemoryCell = observer(
           (props.cellState.isReserved ? " reserved" : " unreserved")
         }
       >
-        {value}
+        <div className="memory-value">{value}</div>
         <div className={"memory-address-parent"}>
           <div className={"memory-address"}>{address}</div>
         </div>
