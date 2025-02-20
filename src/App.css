@@ -70,7 +70,9 @@ html {
   caret-color: #FFF8;
   border: 0;
   outline: none;
-  margin-top: -8.5px; /* ok but why */
+
+  /* This gets the caret in line with the actual text, since we display the caret */
+  transform: translateY(-9px) translateX(-2px);
 }
 
 .command-input input::selection {
@@ -157,24 +159,43 @@ html {
 /* Memory area styling */
 
 .memory-container {
-  margin: 8px;
+  margin: 16px;
 }
 
 .cell-container {
   display: inline-block;
-  width: 20px;
-  height: 20px;
-  line-height: 20px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
   font-size: 15px;
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: 26px;
   padding: 8px;
   border-left: 1px solid #ffffff08;
   border-top: 1px solid #ffffff08;
   border-bottom: 1px solid #ffffff08;
   transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
   font-family: 'Source Code Pro', monospace;
-  color: #FFF5;
+  color: #FFF7;
+
+  position: relative;
+}
+
+.memory-address-parent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.memory-address {
+  transform: translateY(-25px);
+  font-size: 10px;
+  height: 12px;
+  line-height: 12px;
+  color: #FFF3;
 }
 
 .cell-container:first-child {

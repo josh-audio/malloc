@@ -10,6 +10,8 @@ function getDefaultCommandHistory() {
 }
 
 class State {
+  displayBase: 10 | 16 = 16;
+
   memorySize: number = 256;
   heap: { isAllocated: boolean; isReserved: boolean; value: number }[] = [];
 

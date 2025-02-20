@@ -56,6 +56,43 @@ class Engine {
         return { nodeType: "void" };
       },
     },
+
+    setDisplayBase: {
+      nodeType: "nativeFunctionDefinition",
+      arguments: [
+        {
+          nodeType: "declaration",
+          declaration: {
+            nodeType: "singleDeclaration",
+            identifier: {
+              nodeType: "identifier",
+              identifier: "base",
+            },
+            type: {
+              nodeType: "type",
+              type: "int",
+            },
+          },
+        },
+      ],
+      body: (args: LiteralNode[]) => {
+        if (args[0].literal.nodeType !== "int") {
+          throw new Error(
+            `Internal error: Expected argument 0 to be of type int, but got ${args[0].literal.nodeType}.`
+          );
+        }
+
+        const base = parseInt(args[0].literal.int);
+
+        if (base !== 10 && base !== 16) {
+          throw new Error(`Runtime error: Invalid base ${base}. Must be 10 or 16.`);
+        }
+        
+        state.displayBase = base;
+
+        return { nodeType: "void" };
+      },
+    },
   };
 
   // Recursively evaluates the given statement. Returns a literal node if the
