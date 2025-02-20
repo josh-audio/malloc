@@ -27,76 +27,6 @@ const grammar: nearley.CompiledRules = {
           return data[0][0]
         }
         },
-    {"name": "intDecimal$ebnf$1", "symbols": [/[0-9]/]},
-    {"name": "intDecimal$ebnf$1", "symbols": ["intDecimal$ebnf$1", /[0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "intDecimal", "symbols": ["intDecimal$ebnf$1"], "postprocess": 
-        function(data) {
-          return {
-            nodeType: 'int',
-            int: data[0].join().replace(/,/g, '')
-          }
-        }
-        },
-    {"name": "intHex$string$1", "symbols": [{"literal":"0"}, {"literal":"x"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "intHex$ebnf$1", "symbols": [/[0-9a-fA-F]/]},
-    {"name": "intHex$ebnf$1", "symbols": ["intHex$ebnf$1", /[0-9a-fA-F]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "intHex", "symbols": ["intHex$string$1", "intHex$ebnf$1"], "postprocess": 
-        function(data) {
-          return {
-            nodeType: 'int',
-            int: parseInt(data[1].join().replace(/,/g, ''), 16).toString()
-          }
-        }
-        },
-    {"name": "int$subexpression$1", "symbols": ["intDecimal"]},
-    {"name": "int$subexpression$1", "symbols": ["intHex"]},
-    {"name": "int", "symbols": ["int$subexpression$1"], "postprocess": 
-        function(data) {
-          return data[0][0]
-        }
-        },
-    {"name": "double$ebnf$1", "symbols": [/[0-9]/]},
-    {"name": "double$ebnf$1", "symbols": ["double$ebnf$1", /[0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "double$ebnf$2", "symbols": []},
-    {"name": "double$ebnf$2", "symbols": ["double$ebnf$2", /[0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "double", "symbols": ["double$ebnf$1", {"literal":"."}, "double$ebnf$2"], "postprocess": 
-        function(data) {
-          return {
-            nodeType: 'double',
-            double: data[0].join().replace(/,/g, '') + '.' + data[2].join().replace(/,/g, '')
-          }
-        }
-        },
-    {"name": "string$ebnf$1", "symbols": []},
-    {"name": "string$ebnf$1", "symbols": ["string$ebnf$1", /[^"]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "string", "symbols": [{"literal":"\""}, "string$ebnf$1", {"literal":"\""}], "postprocess": 
-        function(data) {
-          return {
-            nodeType: 'string',
-            string: data[1].join().replace(/,/g, '')
-          }
-        }
-        },
-    {"name": "char", "symbols": [{"literal":"'"}, /[^']/, {"literal":"'"}], "postprocess": 
-        function(data) {
-          return {
-            nodeType: 'char',
-            char: data[1]
-          }
-        }
-        },
-    {"name": "literal$subexpression$1", "symbols": ["int"]},
-    {"name": "literal$subexpression$1", "symbols": ["double"]},
-    {"name": "literal$subexpression$1", "symbols": ["string"]},
-    {"name": "literal$subexpression$1", "symbols": ["char"]},
-    {"name": "literal", "symbols": ["literal$subexpression$1"], "postprocess": 
-        function(data) {
-          return {
-            nodeType: 'literal',
-            literal: data[0][0],
-          }
-        }
-        },
     {"name": "identifier$ebnf$1", "symbols": []},
     {"name": "identifier$ebnf$1", "symbols": ["identifier$ebnf$1", /[a-zA-Z0-9_]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
     {"name": "identifier", "symbols": [/[a-zA-Z_]/, "identifier$ebnf$1"], "postprocess": 
@@ -105,13 +35,6 @@ const grammar: nearley.CompiledRules = {
             nodeType: 'identifier',
             identifier: (data[0] + data[1]).replace(/,/g, '')
           }
-        }
-        },
-    {"name": "_$ebnf$1", "symbols": []},
-    {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", /[ ]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
-    {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": 
-        function() {
-          return null;
         }
         },
     {"name": "assignment$subexpression$1", "symbols": ["declaration"]},
@@ -185,39 +108,6 @@ const grammar: nearley.CompiledRules = {
           }
         }
         },
-    {"name": "type$subexpression$1$string$1", "symbols": [{"literal":"i"}, {"literal":"n"}, {"literal":"t"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$1"]},
-    {"name": "type$subexpression$1$string$2", "symbols": [{"literal":"i"}, {"literal":"n"}, {"literal":"t"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$2", "_", {"literal":"*"}]},
-    {"name": "type$subexpression$1$string$3", "symbols": [{"literal":"d"}, {"literal":"o"}, {"literal":"u"}, {"literal":"b"}, {"literal":"l"}, {"literal":"e"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$3"]},
-    {"name": "type$subexpression$1$string$4", "symbols": [{"literal":"d"}, {"literal":"o"}, {"literal":"u"}, {"literal":"b"}, {"literal":"l"}, {"literal":"e"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$4", "_", {"literal":"*"}]},
-    {"name": "type$subexpression$1$string$5", "symbols": [{"literal":"s"}, {"literal":"t"}, {"literal":"r"}, {"literal":"i"}, {"literal":"n"}, {"literal":"g"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$5"]},
-    {"name": "type$subexpression$1$string$6", "symbols": [{"literal":"c"}, {"literal":"h"}, {"literal":"a"}, {"literal":"r"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$6"]},
-    {"name": "type$subexpression$1$string$7", "symbols": [{"literal":"c"}, {"literal":"h"}, {"literal":"a"}, {"literal":"r"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$7", "_", {"literal":"*"}]},
-    {"name": "type$subexpression$1$string$8", "symbols": [{"literal":"v"}, {"literal":"o"}, {"literal":"i"}, {"literal":"d"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$8"]},
-    {"name": "type$subexpression$1$string$9", "symbols": [{"literal":"v"}, {"literal":"o"}, {"literal":"i"}, {"literal":"d"}], "postprocess": function joiner(d) {return d.join('');}},
-    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$9", "_", {"literal":"*"}]},
-    {"name": "type", "symbols": ["type$subexpression$1"], "postprocess": 
-        function(data) {
-          let type;
-          if (data[0].length > 1) {
-            type = data[0][0] + data[0][2];
-          }
-          else {
-            type = data[0][0];
-          }
-          return {
-            nodeType: 'type',
-            type: type
-          }
-        }
-        },
     {"name": "cast", "symbols": [{"literal":"("}, "_", "type", "_", {"literal":")"}, "_", "statement"], "postprocess": 
         function(data) {
           return {
@@ -251,6 +141,114 @@ const grammar: nearley.CompiledRules = {
             nodeType: 'parenthesis',
             statement: data[1]
           }
+        }
+        },
+    {"name": "type$subexpression$1$string$1", "symbols": [{"literal":"i"}, {"literal":"n"}, {"literal":"t"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$1"]},
+    {"name": "type$subexpression$1$string$2", "symbols": [{"literal":"i"}, {"literal":"n"}, {"literal":"t"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$2", "_", {"literal":"*"}]},
+    {"name": "type$subexpression$1$string$3", "symbols": [{"literal":"d"}, {"literal":"o"}, {"literal":"u"}, {"literal":"b"}, {"literal":"l"}, {"literal":"e"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$3"]},
+    {"name": "type$subexpression$1$string$4", "symbols": [{"literal":"s"}, {"literal":"t"}, {"literal":"r"}, {"literal":"i"}, {"literal":"n"}, {"literal":"g"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$4"]},
+    {"name": "type$subexpression$1$string$5", "symbols": [{"literal":"c"}, {"literal":"h"}, {"literal":"a"}, {"literal":"r"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$5"]},
+    {"name": "type$subexpression$1$string$6", "symbols": [{"literal":"c"}, {"literal":"h"}, {"literal":"a"}, {"literal":"r"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$6", "_", {"literal":"*"}]},
+    {"name": "type$subexpression$1$string$7", "symbols": [{"literal":"v"}, {"literal":"o"}, {"literal":"i"}, {"literal":"d"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$7"]},
+    {"name": "type$subexpression$1$string$8", "symbols": [{"literal":"v"}, {"literal":"o"}, {"literal":"i"}, {"literal":"d"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "type$subexpression$1", "symbols": ["type$subexpression$1$string$8", "_", {"literal":"*"}]},
+    {"name": "type", "symbols": ["type$subexpression$1"], "postprocess": 
+        function(data) {
+          let type;
+          if (data[0].length > 1) {
+            type = data[0][0] + data[0][2];
+          }
+          else {
+            type = data[0][0];
+          }
+          return {
+            nodeType: 'type',
+            type: type
+          }
+        }
+        },
+    {"name": "literal$subexpression$1", "symbols": ["int"]},
+    {"name": "literal$subexpression$1", "symbols": ["double"]},
+    {"name": "literal$subexpression$1", "symbols": ["string"]},
+    {"name": "literal$subexpression$1", "symbols": ["char"]},
+    {"name": "literal", "symbols": ["literal$subexpression$1"], "postprocess": 
+        function(data) {
+          return {
+            nodeType: 'literal',
+            literal: data[0][0],
+          }
+        }
+        },
+    {"name": "int$subexpression$1", "symbols": ["intDecimal"]},
+    {"name": "int$subexpression$1", "symbols": ["intHex"]},
+    {"name": "int", "symbols": ["int$subexpression$1"], "postprocess": 
+        function(data) {
+          return data[0][0]
+        }
+        },
+    {"name": "intDecimal$ebnf$1", "symbols": [/[0-9]/]},
+    {"name": "intDecimal$ebnf$1", "symbols": ["intDecimal$ebnf$1", /[0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "intDecimal", "symbols": ["intDecimal$ebnf$1"], "postprocess": 
+        function(data) {
+          return {
+            nodeType: 'int',
+            int: data[0].join().replace(/,/g, '')
+          }
+        }
+        },
+    {"name": "intHex$string$1", "symbols": [{"literal":"0"}, {"literal":"x"}], "postprocess": function joiner(d) {return d.join('');}},
+    {"name": "intHex$ebnf$1", "symbols": [/[0-9a-fA-F]/]},
+    {"name": "intHex$ebnf$1", "symbols": ["intHex$ebnf$1", /[0-9a-fA-F]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "intHex", "symbols": ["intHex$string$1", "intHex$ebnf$1"], "postprocess": 
+        function(data) {
+          return {
+            nodeType: 'int',
+            int: parseInt(data[1].join().replace(/,/g, ''), 16).toString()
+          }
+        }
+        },
+    {"name": "double$ebnf$1", "symbols": [/[0-9]/]},
+    {"name": "double$ebnf$1", "symbols": ["double$ebnf$1", /[0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "double$ebnf$2", "symbols": []},
+    {"name": "double$ebnf$2", "symbols": ["double$ebnf$2", /[0-9]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "double", "symbols": ["double$ebnf$1", {"literal":"."}, "double$ebnf$2"], "postprocess": 
+        function(data) {
+          return {
+            nodeType: 'double',
+            double: data[0].join().replace(/,/g, '') + '.' + data[2].join().replace(/,/g, '')
+          }
+        }
+        },
+    {"name": "string$ebnf$1", "symbols": []},
+    {"name": "string$ebnf$1", "symbols": ["string$ebnf$1", /[^"]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "string", "symbols": [{"literal":"\""}, "string$ebnf$1", {"literal":"\""}], "postprocess": 
+        function(data) {
+          return {
+            nodeType: 'string',
+            string: data[1].join().replace(/,/g, '')
+          }
+        }
+        },
+    {"name": "char", "symbols": [{"literal":"'"}, /[^']/, {"literal":"'"}], "postprocess": 
+        function(data) {
+          return {
+            nodeType: 'char',
+            char: data[1]
+          }
+        }
+        },
+    {"name": "_$ebnf$1", "symbols": []},
+    {"name": "_$ebnf$1", "symbols": ["_$ebnf$1", /[ ]/], "postprocess": function arrpush(d) {return d[0].concat([d[1]]);}},
+    {"name": "_", "symbols": ["_$ebnf$1"], "postprocess": 
+        function() {
+          return null;
         }
         }
 ]

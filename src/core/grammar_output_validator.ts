@@ -30,7 +30,6 @@ const typeSchema = z.object({
     z.literal("int"),
     z.literal("int*"),
     z.literal("double"),
-    z.literal("double*"),
     z.literal("string"),
     z.literal("char"),
     z.literal("char*"),

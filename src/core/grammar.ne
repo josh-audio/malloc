@@ -10,78 +10,12 @@ statement -> (literal | identifier | assignment | function_call | declaration | 
   }
 %}
 
-intDecimal -> [0-9]:+ {%
-  function(data) {
-    return {
-      nodeType: 'int',
-      int: data[0].join().replace(/,/g, '')
-    }
-  }
-%}
-
-intHex -> "0x" [0-9a-fA-F]:+ {%
-  function(data) {
-    return {
-      nodeType: 'int',
-      int: parseInt(data[1].join().replace(/,/g, ''), 16).toString()
-    }
-  }
-%}
-
-int -> (intDecimal | intHex) {%
-  function(data) {
-    return data[0][0]
-  }
-%}
-
-double -> [0-9]:+ "." [0-9]:* {%
-  function(data) {
-    return {
-      nodeType: 'double',
-      double: data[0].join().replace(/,/g, '') + '.' + data[2].join().replace(/,/g, '')
-    }
-  }
-%}
-
-string -> "\"" [^"]:* "\"" {%
-  function(data) {
-    return {
-      nodeType: 'string',
-      string: data[1].join().replace(/,/g, '')
-    }
-  }
-%}
-
-char -> "'" [^'] "'" {%
-  function(data) {
-    return {
-      nodeType: 'char',
-      char: data[1]
-    }
-  }
-%}
-
-literal -> (int | double | string | char) {%
-  function(data) {
-    return {
-      nodeType: 'literal',
-      literal: data[0][0],
-    }
-  }
-%}
-
 identifier -> [a-zA-Z_] [a-zA-Z0-9_]:* {%
   function(data) {
     return {
       nodeType: 'identifier',
       identifier: (data[0] + data[1]).replace(/,/g, '')
     }
-  }
-%}
-
-_ -> [ ]:* {%
-  function() {
-    return null;
   }
 %}
 
@@ -154,22 +88,6 @@ array_index -> identifier _ "[" _ statement _ "]" {%
   }
 %}
 
-type -> ("int" | "int" _ "*" | "double" | "double" _ "*" | "string" | "char" | "char" _ "*" | "void" | "void" _ "*") {%
-  function(data) {
-    let type;
-    if (data[0].length > 1) {
-      type = data[0][0] + data[0][2];
-    }
-    else {
-      type = data[0][0];
-    }
-    return {
-      nodeType: 'type',
-      type: type
-    }
-  }
-%}
-
 cast -> "(" _ type _ ")" _ statement {%
   function(data) {
     return {
@@ -197,5 +115,87 @@ parenthesis -> "(" statement ")" {%
       nodeType: 'parenthesis',
       statement: data[1]
     }
+  }
+%}
+
+type -> ("int" | "int" _ "*" | "double" | "string" | "char" | "char" _ "*" | "void" | "void" _ "*") {%
+  function(data) {
+    let type;
+    if (data[0].length > 1) {
+      type = data[0][0] + data[0][2];
+    }
+    else {
+      type = data[0][0];
+    }
+    return {
+      nodeType: 'type',
+      type: type
+    }
+  }
+%}
+
+literal -> (int | double | string | char) {%
+  function(data) {
+    return {
+      nodeType: 'literal',
+      literal: data[0][0],
+    }
+  }
+%}
+
+int -> (intDecimal | intHex) {%
+  function(data) {
+    return data[0][0]
+  }
+%}
+
+intDecimal -> [0-9]:+ {%
+  function(data) {
+    return {
+      nodeType: 'int',
+      int: data[0].join().replace(/,/g, '')
+    }
+  }
+%}
+
+intHex -> "0x" [0-9a-fA-F]:+ {%
+  function(data) {
+    return {
+      nodeType: 'int',
+      int: parseInt(data[1].join().replace(/,/g, ''), 16).toString()
+    }
+  }
+%}
+
+double -> [0-9]:+ "." [0-9]:* {%
+  function(data) {
+    return {
+      nodeType: 'double',
+      double: data[0].join().replace(/,/g, '') + '.' + data[2].join().replace(/,/g, '')
+    }
+  }
+%}
+
+string -> "\"" [^"]:* "\"" {%
+  function(data) {
+    return {
+      nodeType: 'string',
+      string: data[1].join().replace(/,/g, '')
+    }
+  }
+%}
+
+char -> "'" [^'] "'" {%
+  function(data) {
+    return {
+      nodeType: 'char',
+      char: data[1]
+    }
+  }
+%}
+
+_ -> [ ]:* {%
+  function() {
+    return null;
   }
 %}
