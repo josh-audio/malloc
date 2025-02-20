@@ -1,5 +1,6 @@
 html, body, #root {
-  height: 100%;
+  /* This is as awful as it looks, but I don't want to rework the layout right now */
+  height: 98%;
   background-color: #222;
   color: #fff8;
 }

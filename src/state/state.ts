@@ -1,6 +1,11 @@
 import { makeAutoObservable } from "mobx";
 
-function getDefaultCommandHistory() {
+type CommandHistoryItem = {
+  style: "command" | "error" | "info";
+  text: string;
+};
+
+function getDefaultCommandHistory(): CommandHistoryItem[] {
   return [
     {
       style: "info",
@@ -15,7 +20,11 @@ class State {
   memorySize: number = 256;
   heap: { isAllocated: boolean; isReserved: boolean; value: number }[] = [];
 
-  commandHistory: { style: string; text: string }[] = getDefaultCommandHistory();
+  // Styles:
+  //  - command (for actual commands)
+  //  - error (syntax or runtime errors)
+  //  - info (non-error feedback)
+  commandHistory: CommandHistoryItem[] = getDefaultCommandHistory();
 
   resetCommandHistory() {
     this.commandHistory = getDefaultCommandHistory();
@@ -37,3 +46,4 @@ class State {
 const state = new State();
 
 export default state;
+export type { CommandHistoryItem };

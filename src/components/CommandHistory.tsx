@@ -23,7 +23,6 @@ function HistoryItem(props: {
   index: number;
 }) {
   return (
-    // <animated.div style={{marginLeft: marginLeft, opacity: opacity}} className={`command-history-item ${props.historyItem.style}`}>
     <div className={`command-history-item ${props.historyItem.style}`}>
       {props.historyItem.style !== "command" ? (
         insertNewlines(props.historyItem.text)
@@ -34,7 +33,6 @@ function HistoryItem(props: {
           </SyntaxHighlighter>
         </div>
       )}
-      {/* </animated.div> */}
     </div>
   );
 }

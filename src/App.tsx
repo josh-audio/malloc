@@ -2,7 +2,6 @@ import { useState } from "react";
 import "./App.css";
 import CommandArea from "./components/CommandArea.tsx";
 import MemoryVisualizer from "./components/MemoryVisualizer.tsx";
-import state from "./state/state.ts";
 import { observer } from "mobx-react";
 
 const App = observer(() => {
@@ -37,7 +36,6 @@ const App = observer(() => {
         setIsDragActive(false);
       }}
     >
-      {state.heap.filter((elem) => elem.isAllocated).length}
       <div className="mainContent" style={{ flex: 1 }}>
         <MemoryVisualizer />
       </div>

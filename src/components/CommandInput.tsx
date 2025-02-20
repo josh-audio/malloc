@@ -24,7 +24,6 @@ function CommandInput() {
 
   return (
     <div className="command-input-container">
-      {/* TODO: animate */}
       <div
         className={`command-input-arrow ${
           isFocused || isHovered ? "focused" : ""

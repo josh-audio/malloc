@@ -1,5 +1,5 @@
 import nearley from "nearley";
-import state from "../state/state";
+import state, { CommandHistoryItem } from "../state/state";
 import engine from "./runtime/engine";
 import grammar from "./grammar";
 import statementSchema from "./grammar_output_validator";
@@ -49,7 +49,7 @@ class Controller {
   }
 
   executeStatement(statement: string): void {
-    const historyToAdd = [];
+    const historyToAdd: CommandHistoryItem[] = [];
 
     historyToAdd.push({
       style: "command",

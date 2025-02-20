@@ -5,7 +5,6 @@ const MemoryBlock = (props: {
     cells: { index: number; isAllocated: boolean; isReserved: boolean }[];
   };
 }) => {
-  console.log(props.blockState);
   return (
     <span className="memory-block-container">
       {props.blockState.cells.map((cell, index) => {
