@@ -16,32 +16,21 @@ class Controller {
       return input;
     }
 
-    const zeroArgumentFunctions = [
-      "help",
-      "reset",
-      "clearConsole",
-      "coalesce",
-      "getAllocationMethod",
-      "freeAll",
-    ];
-    const oneArgumentFunctions = [
-      "malloc",
-      "free",
-      "sizeof",
-      "setAllocationMethod",
-    ];
+    let predictions = Object.keys(engine.globalScope).map((identifier) => {
+      const value = engine.globalScope[identifier];
 
-    // const identifiers: string[] = engine.getIdentifiers();
-    // const functions: string[] = engine.getFunctions();
-    const identifiers: string[] = [];
-    const functions: string[] = [];
-
-    let predictions = oneArgumentFunctions
-      .map((elem) => elem + "(")
-      .concat(zeroArgumentFunctions.map((elem) => elem + "()"))
-      .concat(
-        identifiers.filter((identifier) => !functions.includes(identifier))
-      );
+      if (value.nodeType === "literal") {
+        return identifier;
+      } else if (value.nodeType === "nativeFunctionDefinition") {
+        if (value.arguments.length > 0) {
+          return `${identifier}(`;
+        } else {
+          return `${identifier}()`;
+        }
+      } else {
+        throw new Error(`Unexpected value: ${identifier}`);
+      }
+    });
 
     predictions = predictions.sort();
 
