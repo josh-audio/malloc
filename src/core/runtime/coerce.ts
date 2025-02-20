@@ -89,7 +89,7 @@ const coerceToString = (value: LiteralNode): LiteralNode => {
 };
 
 const coerce = (value: LiteralNode, type: TypeNode): LiteralNode => {
-  if (type.type === "int") {
+  if (type.type === "int" || type.type.includes("*")) {
     return coerceToInt(value);
   } else if (type.type === "double") {
     return coerceToDouble(value);
@@ -98,7 +98,7 @@ const coerce = (value: LiteralNode, type: TypeNode): LiteralNode => {
   } else if (type.type === "string") {
     return coerceToString(value);
   } else {
-    throw Error(`Internal error: Unexpected type node type ${type.nodeType}.`);
+    throw Error(`Internal error: Unexpected type node with type: "${type.nodeType}".`);
   }
 };
 
