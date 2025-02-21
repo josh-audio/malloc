@@ -307,16 +307,15 @@ class Engine {
       }
       // Set the value in the global scope
       else if (statement.left.nodeType === "identifier") {
-        scopeItem = this.globalScope[statement.left.identifier];
-        this.globalScope[statement.left.identifier] = coerce(
+        scopeItem = coerce(
           value,
-          scopeItem.type
+          this.globalScope[statement.left.identifier].type
         );
+        this.globalScope[statement.left.identifier] = scopeItem;
       } else if (statement.left.nodeType === "declaration") {
-        scopeItem =
-          this.globalScope[statement.left.declaration.identifier.identifier];
+        scopeItem = coerce(value, statement.left.declaration.type);
         this.globalScope[statement.left.declaration.identifier.identifier] =
-          coerce(value, statement.left.declaration.type);
+          scopeItem;
       } else {
         throw new Error(
           `Internal error: Unexpected assignment left-hand side node type.`
