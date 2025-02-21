@@ -173,7 +173,7 @@ intDecimal -> [0-9]:+ {%
   function(data) {
     return {
       nodeType: 'int',
-      int: data[0].join().replace(/,/g, '')
+      int: parseInt(data[0].join().replace(/,/g, ''))
     }
   }
 %}
@@ -182,7 +182,7 @@ intHex -> "0x" [0-9a-fA-F]:+ {%
   function(data) {
     return {
       nodeType: 'int',
-      int: parseInt(data[1].join().replace(/,/g, ''), 16).toString()
+      int: parseInt(data[1].join().replace(/,/g, ''), 16)
     }
   }
 %}
@@ -191,7 +191,7 @@ double -> [0-9]:+ "." [0-9]:* {%
   function(data) {
     return {
       nodeType: 'double',
-      double: data[0].join().replace(/,/g, '') + '.' + data[2].join().replace(/,/g, '')
+      double: parseFloat(data[0].join().replace(/,/g, '') + '.' + data[2].join().replace(/,/g, ''))
     }
   }
 %}

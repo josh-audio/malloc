@@ -116,7 +116,7 @@ class Engine {
             );
           }
 
-          const base = parseInt(args[0].value.literal.int);
+          const base = args[0].value.literal.int;
 
           if (base !== 10 && base !== 16) {
             throw new Error(
@@ -248,7 +248,7 @@ class Engine {
               nodeType: "literal",
               literal: {
                 nodeType: "int",
-                int: "0",
+                int: 0,
               },
             },
           },
@@ -319,7 +319,7 @@ class Engine {
           );
         }
 
-        const heapValueRaw = parseInt(coerced.value.literal.int);
+        const heapValueRaw = coerced.value.literal.int;
 
         if (heapValueRaw < 0) {
           const value = Math.abs(heapValueRaw) % 256;
@@ -404,7 +404,7 @@ class Engine {
 
       const value: LiteralNode = {
         nodeType: "literal",
-        literal: { nodeType: "int", int: state.heap[address].toString() },
+        literal: { nodeType: "int", int: state.heap[address] },
       };
 
       if (runtimeValue.type.type === "int*") {
@@ -453,7 +453,7 @@ class Engine {
       );
     }
 
-    const address = parseInt(coercedValue.int);
+    const address = coercedValue.int;
 
     return address;
   }

@@ -9,8 +9,8 @@ import { z, ZodType } from "zod";
 const literalSchema = z.object({
   nodeType: z.literal("literal"),
   literal: z.discriminatedUnion("nodeType", [
-    z.object({ nodeType: z.literal("int"), int: z.string() }),
-    z.object({ nodeType: z.literal("double"), double: z.string() }),
+    z.object({ nodeType: z.literal("int"), int: z.number() }),
+    z.object({ nodeType: z.literal("double"), double: z.number() }),
     z.object({ nodeType: z.literal("string"), string: z.string() }),
     z.object({ nodeType: z.literal("char"), char: z.string() }),
   ]),
@@ -90,7 +90,12 @@ type ArrayIndexNode = {
 const assignmentSchema: ZodType<AssignmentNode> = z.lazy(() =>
   z.object({
     nodeType: z.literal("assignment"),
-    left: z.union([declarationSchema, identifierSchema, arrayIndexSchema, dereferenceSchema]),
+    left: z.union([
+      declarationSchema,
+      identifierSchema,
+      arrayIndexSchema,
+      dereferenceSchema,
+    ]),
     right: statementSchema,
   })
 );
@@ -124,20 +129,32 @@ type DereferenceNode = {
   statement: StatementNode;
 };
 
-const operatorSchema: ZodType<OperatorNode> = z.lazy(() => z.object({
-  nodeType: z.literal("operator"),
-  operator: z.union([
-    z.literal('+'),
-    z.literal('-'),
-    z.literal('*'),
-    z.literal('/'),
-  ]),
-  left: z.union([literalSchema, identifierSchema, functionCallSchema, parenthesisSchema]),
-  right: z.union([literalSchema, identifierSchema, functionCallSchema, parenthesisSchema]),
-}));
+const operatorSchema: ZodType<OperatorNode> = z.lazy(() =>
+  z.object({
+    nodeType: z.literal("operator"),
+    operator: z.union([
+      z.literal("+"),
+      z.literal("-"),
+      z.literal("*"),
+      z.literal("/"),
+    ]),
+    left: z.union([
+      literalSchema,
+      identifierSchema,
+      functionCallSchema,
+      parenthesisSchema,
+    ]),
+    right: z.union([
+      literalSchema,
+      identifierSchema,
+      functionCallSchema,
+      parenthesisSchema,
+    ]),
+  })
+);
 type OperatorNode = {
   nodeType: "operator";
-  operator: '+' | '-' | '*' | '/';
+  operator: "+" | "-" | "*" | "/";
   left: LiteralNode | IdentifierNode | FunctionCallNode | ParenthesisNode;
   right: LiteralNode | IdentifierNode | FunctionCallNode | ParenthesisNode;
 };

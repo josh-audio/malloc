@@ -109,9 +109,9 @@ class Controller {
           } else if (result.value.literal.nodeType === "string") {
             outputResult = `"${result.value.literal.string}"`;
           } else if (result.value.literal.nodeType === "int") {
-            outputResult = result.value.literal.int;
+            outputResult = result.value.literal.int.toString();
           } else if (result.value.literal.nodeType === "double") {
-            outputResult = result.value.literal.double;
+            outputResult = result.value.literal.double.toString();
           }
         }
 

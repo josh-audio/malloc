@@ -209,7 +209,7 @@ const grammar: nearley.CompiledRules = {
         function(data) {
           return {
             nodeType: 'int',
-            int: data[0].join().replace(/,/g, '')
+            int: parseInt(data[0].join().replace(/,/g, ''))
           }
         }
         },
@@ -220,7 +220,7 @@ const grammar: nearley.CompiledRules = {
         function(data) {
           return {
             nodeType: 'int',
-            int: parseInt(data[1].join().replace(/,/g, ''), 16).toString()
+            int: parseInt(data[1].join().replace(/,/g, ''), 16)
           }
         }
         },
@@ -232,7 +232,7 @@ const grammar: nearley.CompiledRules = {
         function(data) {
           return {
             nodeType: 'double',
-            double: data[0].join().replace(/,/g, '') + '.' + data[2].join().replace(/,/g, '')
+            double: parseFloat(data[0].join().replace(/,/g, '') + '.' + data[2].join().replace(/,/g, ''))
           }
         }
         },

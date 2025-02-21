@@ -21,9 +21,7 @@ const intOperatorPlus = (
     nodeType: "literal",
     literal: {
       nodeType: "int",
-      int: (
-        parseInt(left.literal.int) + parseInt(right.literal.int)
-      ).toString(),
+      int: left.literal.int + right.literal.int,
     },
   };
 };
@@ -43,9 +41,7 @@ const doubleOperatorPlus = (
     nodeType: "literal",
     literal: {
       nodeType: "double",
-      double: (
-        parseFloat(left.literal.double) + parseFloat(right.literal.double)
-      ).toString(),
+      double: left.literal.double + right.literal.double,
     },
   };
 };
@@ -157,9 +153,7 @@ const intOperatorMinus = (
     nodeType: "literal",
     literal: {
       nodeType: "int",
-      int: (
-        parseInt(left.literal.int) - parseInt(right.literal.int)
-      ).toString(),
+      int: left.literal.int - right.literal.int,
     },
   };
 };
@@ -179,9 +173,7 @@ const doubleOperatorMinus = (
     nodeType: "literal",
     literal: {
       nodeType: "double",
-      double: (
-        parseFloat(left.literal.double) - parseFloat(right.literal.double)
-      ).toString(),
+      double: left.literal.double - right.literal.double,
     },
   };
 };
@@ -270,9 +262,7 @@ const intOperatorMultiply = (
     nodeType: "literal",
     literal: {
       nodeType: "int",
-      int: (
-        parseInt(left.literal.int) * parseInt(right.literal.int)
-      ).toString(),
+      int: left.literal.int * right.literal.int,
     },
   };
 };
@@ -292,9 +282,7 @@ const doubleOperatorMultiply = (
     nodeType: "literal",
     literal: {
       nodeType: "double",
-      double: (
-        parseFloat(left.literal.double) * parseFloat(right.literal.double)
-      ).toString(),
+      double: left.literal.double * right.literal.double,
     },
   };
 };
@@ -376,9 +364,7 @@ const intOperatorDivide = (
     nodeType: "literal",
     literal: {
       nodeType: "int",
-      int: Math.floor(
-        parseInt(left.literal.int) / parseInt(right.literal.int)
-      ).toString(),
+      int: Math.floor(left.literal.int / right.literal.int),
     },
   };
 };
@@ -398,9 +384,7 @@ const doubleOperatorDivide = (
     nodeType: "literal",
     literal: {
       nodeType: "double",
-      double: (
-        parseFloat(left.literal.double) / parseFloat(right.literal.double)
-      ).toString(),
+      double: left.literal.double / right.literal.double,
     },
   };
 };
