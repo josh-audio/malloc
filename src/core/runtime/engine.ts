@@ -21,8 +21,14 @@ type VoidNode = {
 // Defines a function that is implemented in native JavaScript.
 type NativeFunctionDefinitionNode = {
   nodeType: "nativeFunctionDefinition";
-  arguments: DeclarationNode[];
-  body: (args: RuntimeValueNode[]) => RuntimeValueNode | VoidNode;
+
+  // Union with type node here is a hack. If we want types to be passed into
+  // functions, we really should allow types as values in the grammar, and then
+  // have the runtime engine handle them. For now we just allow types as values
+  // in function calls from the grammar side, and nowhere else except casts and
+  // declarations.
+  arguments: (DeclarationNode | TypeNode)[];
+  body: (args: (RuntimeValueNode | TypeNode)[]) => RuntimeValueNode | VoidNode;
 };
 
 type RuntimeValueNode = {
@@ -59,10 +65,19 @@ class Engine {
             },
           },
         ],
-        body: (args: RuntimeValueNode[]) =>
-          mallocImpl(engine.globalScope, args),
+        body: (args: (RuntimeValueNode | TypeNode)[]) => {
+          if (args.some((arg) => arg.nodeType === "type")) {
+            throw new Error(`Runtime error: Cannot call malloc with a type`);
+          }
+
+          return mallocImpl(
+            engine.globalScope,
+            args.filter((arg) => arg.nodeType === "runtimeValue")
+          );
+        },
       },
     },
+
     clear: {
       nodeType: "runtimeValue",
       type: {
@@ -103,7 +118,13 @@ class Engine {
             },
           },
         ],
-        body: (args: RuntimeValueNode[]) => {
+        body: (args: (RuntimeValueNode | TypeNode)[]) => {
+          if (args[0].nodeType === "type") {
+            throw new Error(
+              `Runtime error: Cannot call setDisplayBase with a type`
+            );
+          }
+
           if (args[0].value.nodeType !== "literal") {
             throw new Error(
               `Runtime error: Expected argument 0 to be of type int, but got ${args[0].value.nodeType}.`
@@ -127,6 +148,66 @@ class Engine {
           state.displayBase = base;
 
           return { nodeType: "void" };
+        },
+      },
+    },
+
+    sizeof: {
+      nodeType: "runtimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [
+          {
+            nodeType: "type",
+            type: "void*", // Again, a hack. This doesn't actually matter, just a placeholder.
+          },
+        ],
+        body: (args: (RuntimeValueNode | TypeNode)[]) => {
+          if (args.length !== 1) {
+            throw new Error(
+              `Runtime error: Expected 1 argument for sizeof, but got ${args.length}.`
+            );
+          }
+
+          if (args[0].nodeType !== "type") {
+            throw new Error(
+              `Internal error: Expected argument 0 to be of type "type", but got ${args[0].nodeType}.`
+            );
+          }
+
+          if (args[0].type === "void") {
+            throw new Error(
+              `Runtime error: Cannot call sizeof on type "void".`
+            );
+          }
+
+          if (args[0].type === "string") {
+            throw new Error(
+              `Runtime error: Cannot call sizeof on type "string".`
+            );
+          }
+
+          let size = 1;
+
+          if (args[0].type === "int") {
+            size = 4;
+          }
+
+          return {
+            nodeType: "runtimeValue",
+            type: { nodeType: "type", type: "int" },
+            value: {
+              nodeType: "literal",
+              literal: {
+                nodeType: "int",
+                int: size,
+              },
+            },
+          };
         },
       },
     },
@@ -336,8 +417,10 @@ class Engine {
 
       if (func.nodeType === "nativeFunctionDefinition") {
         const args = statement.arguments
-          .map((arg) => this.evaluate(arg))
-          .filter((arg) => arg.nodeType === "runtimeValue");
+          .map((arg) => (arg.nodeType === "type" ? arg : this.evaluate(arg)))
+          .filter(
+            (arg) => arg.nodeType === "runtimeValue" || arg.nodeType === "type"
+          );
 
         // Validate argument count
         if (args.length !== func.arguments.length) {
@@ -352,9 +435,42 @@ class Engine {
 
         // Validate argument types
         for (let i = 0; i < args.length; i++) {
-          if (args[i].type.type !== func.arguments[i].declaration.type.type) {
+          const funcArg = func.arguments[i];
+          const inputArg = args[i];
+          if (funcArg.nodeType === "type" && inputArg.nodeType === "type") {
+            continue;
+          }
+
+          if (
+            funcArg.nodeType === "type" &&
+            inputArg.nodeType === "runtimeValue"
+          ) {
             throw new Error(
-              `Type error: ${statement.functionName.identifier}: Expected argument ${i} to be of type ${func.arguments[i].declaration.type.type}, but got ${args[i].type.type}.`
+              `Type error: Expected argument ${i} to be of type ${funcArg.type}, but got a runtime value.`
+            );
+          }
+
+          if (
+            funcArg.nodeType === "declaration" &&
+            inputArg.nodeType === "type"
+          ) {
+            throw new Error(
+              `Type error: Expected argument ${i} to be a runtime value, but got a type.`
+            );
+          }
+
+          if (
+            funcArg.nodeType !== "declaration" ||
+            inputArg.nodeType !== "runtimeValue"
+          ) {
+            throw new Error(
+              `Internal error: Unexpected argument node type for function ${statement.functionName.identifier}.`
+            );
+          }
+
+          if (inputArg.type.type !== funcArg.declaration.type.type) {
+            throw new Error(
+              `Type error: ${statement.functionName.identifier}: Expected argument ${i} to be of type ${funcArg.declaration.type.type}, but got ${inputArg.type.type}.`
             );
           }
         }

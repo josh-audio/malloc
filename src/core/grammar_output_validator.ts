@@ -64,13 +64,13 @@ const functionCallSchema: ZodType<FunctionCallNode> = z.lazy(() =>
   z.object({
     nodeType: z.literal("functionCall"),
     functionName: identifierSchema,
-    arguments: statementSchema.array(),
+    arguments: z.union([statementSchema, typeSchema]).array(),
   })
 );
 type FunctionCallNode = {
   nodeType: "functionCall";
   functionName: IdentifierNode;
-  arguments: StatementNode[];
+  arguments: (StatementNode | TypeNode)[];
 };
 
 // This is unnecessarily specific - should generalize it to parse into an operator

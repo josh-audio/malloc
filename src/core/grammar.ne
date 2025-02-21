@@ -15,6 +15,7 @@ statement -> (
   | operator 
   | parenthesis
   | dereference
+  | type
 ) {%
   function(data) {
     return data[0][0]
@@ -40,7 +41,7 @@ assignment -> (declaration | identifier | array_index | dereference) _ "=" _ sta
   }
 %}
 
-function_call -> identifier _ "(" _ ( statement | _ ) _ ")" {%
+function_call -> identifier _ "(" _ ( type | statement | _ ) _ ")" {%
   function(data) {
     const arg = data[4][0];
     if (arg?.nodeType === undefined) {

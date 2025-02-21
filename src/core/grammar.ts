@@ -23,6 +23,7 @@ const grammar: nearley.CompiledRules = {
     {"name": "statement$subexpression$1", "symbols": ["operator"]},
     {"name": "statement$subexpression$1", "symbols": ["parenthesis"]},
     {"name": "statement$subexpression$1", "symbols": ["dereference"]},
+    {"name": "statement$subexpression$1", "symbols": ["type"]},
     {"name": "statement", "symbols": ["statement$subexpression$1"], "postprocess": 
         function(data) {
           return data[0][0]
@@ -51,6 +52,7 @@ const grammar: nearley.CompiledRules = {
           }
         }
         },
+    {"name": "function_call$subexpression$1", "symbols": ["type"]},
     {"name": "function_call$subexpression$1", "symbols": ["statement"]},
     {"name": "function_call$subexpression$1", "symbols": ["_"]},
     {"name": "function_call", "symbols": ["identifier", "_", {"literal":"("}, "_", "function_call$subexpression$1", "_", {"literal":")"}], "postprocess": 

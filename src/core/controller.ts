@@ -87,7 +87,7 @@ class Controller {
 
     if (!syntaxError) {
       try {
-        if (parser.results.length !== 1) {
+        if (parser.results.length < 1) {
           console.log(parser.results);
           throw new Error("Internal error: Unexpected parser output.");
         }
