@@ -58,9 +58,7 @@ const charOperatorPlus = (
     nodeType: "literal",
     literal: {
       nodeType: "char",
-      char: String.fromCharCode(
-        left.literal.char.charCodeAt(0) + right.literal.char.charCodeAt(0)
-      ),
+      char: (left.literal.char + right.literal.char) & 0xff,
     },
   };
 };
@@ -190,9 +188,7 @@ const charOperatorMinus = (
     nodeType: "literal",
     literal: {
       nodeType: "char",
-      char: String.fromCharCode(
-        left.literal.char.charCodeAt(0) - right.literal.char.charCodeAt(0)
-      ),
+      char: (left.literal.char - right.literal.char) & 0xff,
     },
   };
 };
@@ -299,9 +295,7 @@ const charOperatorMultiply = (
     nodeType: "literal",
     literal: {
       nodeType: "char",
-      char: String.fromCharCode(
-        left.literal.char.charCodeAt(0) * right.literal.char.charCodeAt(0)
-      ),
+      char: (left.literal.char * right.literal.char) & 0xff,
     },
   };
 };
@@ -401,11 +395,7 @@ const charOperatorDivide = (
     nodeType: "literal",
     literal: {
       nodeType: "char",
-      char: String.fromCharCode(
-        Math.floor(
-          left.literal.char.charCodeAt(0) / right.literal.char.charCodeAt(0)
-        )
-      ),
+      char: Math.floor(left.literal.char / right.literal.char) & 0xff,
     },
   };
 };

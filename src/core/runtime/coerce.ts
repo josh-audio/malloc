@@ -17,7 +17,7 @@ const coerceLiteralToInt = (value: LiteralNode): LiteralNode => {
       nodeType: "literal",
       literal: {
         nodeType: "int",
-        int: value.literal.char.charCodeAt(0),
+        int: value.literal.char,
       },
     };
   } else {
@@ -53,7 +53,7 @@ const coerceLiteralToChar = (value: LiteralNode): LiteralNode => {
       nodeType: "literal",
       literal: {
         nodeType: "char",
-        char: value.literal.string[0],
+        char: value.literal.string.charCodeAt(0),
       },
     };
   } else if (value.literal.nodeType === "int") {
@@ -61,7 +61,7 @@ const coerceLiteralToChar = (value: LiteralNode): LiteralNode => {
       nodeType: "literal",
       literal: {
         nodeType: "char",
-        char: String.fromCharCode(value.literal.int),
+        char: value.literal.int & 0xff,
       },
     };
   } else {
@@ -79,7 +79,7 @@ const coerceLiteralToString = (value: LiteralNode): LiteralNode => {
       nodeType: "literal",
       literal: {
         nodeType: "string",
-        string: value.literal.char,
+        string: String.fromCharCode(value.literal.char),
       },
     };
   } else {

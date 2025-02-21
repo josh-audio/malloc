@@ -12,7 +12,7 @@ const literalSchema = z.object({
     z.object({ nodeType: z.literal("int"), int: z.number() }),
     z.object({ nodeType: z.literal("double"), double: z.number() }),
     z.object({ nodeType: z.literal("string"), string: z.string() }),
-    z.object({ nodeType: z.literal("char"), char: z.string() }),
+    z.object({ nodeType: z.literal("char"), char: z.number() }),
   ]),
 });
 type LiteralNode = z.infer<typeof literalSchema>;

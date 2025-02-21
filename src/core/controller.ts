@@ -105,7 +105,7 @@ class Controller {
           result.value.nodeType === "literal"
         ) {
           if (result.value.literal.nodeType === "char") {
-            outputResult = `'${result.value.literal.char}'`;
+            outputResult = result.value.literal.char.toString();
           } else if (result.value.literal.nodeType === "string") {
             outputResult = `"${result.value.literal.string}"`;
           } else if (result.value.literal.nodeType === "int") {

@@ -250,7 +250,7 @@ const grammar: nearley.CompiledRules = {
         function(data) {
           return {
             nodeType: 'char',
-            char: data[1]
+            char: data[1].charCodeAt(0)
           }
         }
         },
