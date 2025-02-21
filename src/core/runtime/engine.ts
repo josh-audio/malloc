@@ -134,9 +134,7 @@ class Engine {
 
   // Recursively evaluates the given statement. Returns a literal node if the
   // statement evaluates to a value, otherwise returns a void node.
-  evaluate(
-    statement: StatementNode
-  ): RuntimeValueNode | NativeFunctionDefinitionNode | VoidNode {
+  evaluate(statement: StatementNode): RuntimeValueNode | VoidNode {
     if (statement.nodeType === "literal") {
       const type: TypeNode = {
         nodeType: "type",
@@ -151,15 +149,6 @@ class Engine {
     } else if (statement.nodeType === "operator") {
       const left = this.evaluate(statement.left);
       const right = this.evaluate(statement.right);
-
-      if (
-        left.nodeType === "nativeFunctionDefinition" ||
-        right.nodeType === "nativeFunctionDefinition"
-      ) {
-        throw new Error(
-          `Type error: Invalid type "native function" for operator ${statement.operator}.`
-        );
-      }
 
       if (left.nodeType === "void") {
         throw new Error(
@@ -204,12 +193,6 @@ class Engine {
       };
     } else if (statement.nodeType === "cast") {
       const result = this.evaluate(statement.statement);
-
-      if (result.nodeType === "nativeFunctionDefinition") {
-        throw new Error(
-          `Type error: Type "native function" cannot be cast to ${statement.type.type}.`
-        );
-      }
 
       if (result.nodeType === "void") {
         throw new Error(
@@ -280,10 +263,6 @@ class Engine {
           throw new Error(`Runtime error: Cannot dereference void value.`);
         }
 
-        if (runtimeValue.nodeType === "nativeFunctionDefinition") {
-          throw new Error(`Type error: Cannot dereference native function.`);
-        }
-
         // If the left side is a dereference, store the memory address for later
         address = this.getDereferenceAddress(runtimeValue);
 
@@ -299,10 +278,6 @@ class Engine {
 
       if (value.nodeType === "void") {
         throw new Error(`Runtime error: Cannot assign void to variable.`);
-      } else if (value.nodeType === "nativeFunctionDefinition") {
-        throw new Error(
-          `Type error: Cannot assign native function to a variable.`
-        );
       }
 
       let scopeItem: RuntimeValueNode;
@@ -350,7 +325,15 @@ class Engine {
 
       return scopeItem;
     } else if (statement.nodeType === "functionCall") {
-      const func = this.evaluate(statement.functionName);
+      const funcRuntimeValue = this.evaluate(statement.functionName);
+
+      if (funcRuntimeValue.nodeType === "void") {
+        throw new Error(
+          `Type error: Identifier ${statement.functionName.identifier} is not a function.`
+        );
+      }
+
+      const func = funcRuntimeValue.value;
 
       if (func.nodeType === "nativeFunctionDefinition") {
         const args = statement.arguments
@@ -388,10 +371,6 @@ class Engine {
 
       if (runtimeValue.nodeType === "void") {
         throw new Error(`Runtime error: Cannot dereference void value.`);
-      }
-
-      if (runtimeValue.nodeType === "nativeFunctionDefinition") {
-        throw new Error(`Type error: Cannot dereference native function.`);
       }
 
       const address = this.getDereferenceAddress(runtimeValue);
