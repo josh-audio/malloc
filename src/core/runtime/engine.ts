@@ -6,7 +6,7 @@ import {
   TypeNode,
 } from "../grammar_output_validator";
 import { coerce, coerceLiteralToChar, coerceLiteralToInt } from "./coerce";
-import { mallocImpl } from "./malloc_impl";
+import { initMemory, mallocImpl } from "./malloc_impl";
 import {
   coerceOperatorDivide,
   coerceOperatorMinus,
@@ -211,6 +211,22 @@ class Engine {
         },
       },
     },
+
+    reset: {
+      nodeType: "runtimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [],
+        body: () => {
+          initMemory();
+          return { nodeType: "void" };
+        },
+      }
+    }
   };
 
   // Recursively evaluates the given statement. Returns a literal node if the

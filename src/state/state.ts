@@ -1,4 +1,5 @@
 import { makeAutoObservable } from "mobx";
+import { initMemory } from "../core/runtime/malloc_impl";
 
 type CommandHistoryItem = {
   style: "command" | "error" | "info";
@@ -31,9 +32,9 @@ class State {
   }
 
   constructor() {
-    for (let i = 0; i < this.memorySize; i++) {
-      this.heap.push(0);
-    }
+    Promise.resolve().then(() => {
+      initMemory();
+    });
 
     makeAutoObservable(this);
   }
