@@ -116,12 +116,12 @@ type CastNode = {
 const dereferenceSchema: ZodType<DereferenceNode> = z.lazy(() =>
   z.object({
     nodeType: z.literal("dereference"),
-    identifier: identifierSchema,
+    statement: statementSchema,
   })
 );
 type DereferenceNode = {
   nodeType: "dereference";
-  identifier: IdentifierNode;
+  statement: StatementNode;
 };
 
 const operatorSchema: ZodType<OperatorNode> = z.lazy(() => z.object({

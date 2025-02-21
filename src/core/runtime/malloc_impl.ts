@@ -1,14 +1,20 @@
-import { LiteralNode } from "../grammar_output_validator";
-import { Scope } from "./engine";
+import { RuntimeValueNode, Scope } from "./engine";
 
-const mallocImpl = ( scope: Scope, args: LiteralNode[]): LiteralNode => {
+const mallocImpl = (scope: Scope, args: RuntimeValueNode[]): RuntimeValueNode => {
   return {
-    nodeType: "literal",
-    literal: {
-      nodeType: "string",
-      string: `${scope['test']} ${args.length}`,
+    nodeType: "runtimeValue",
+    type: {
+      nodeType: "type",
+      type: "void*",
     },
-  }
+    value: {
+      nodeType: "literal",
+      literal: {
+        nodeType: "string",
+        string: `${scope["test"]} ${args.length}`,
+      },
+    },
+  };
 };
 
 export { mallocImpl };

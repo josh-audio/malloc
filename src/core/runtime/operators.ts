@@ -1,5 +1,9 @@
 import { LiteralNode } from "../grammar_output_validator";
-import { coerceToDouble, coerceToInt, coerceToString } from "./coerce";
+import {
+  coerceLiteralToDouble,
+  coerceLiteralToInt,
+  coerceLiteralToString,
+} from "./coerce";
 
 ////////////////////////
 // Operator +         //
@@ -100,7 +104,10 @@ const coerceOperatorPlus = (
     if (bothInt) {
       return intOperatorPlus(left, right);
     } else {
-      return doubleOperatorPlus(coerceToDouble(left), coerceToDouble(right));
+      return doubleOperatorPlus(
+        coerceLiteralToDouble(left),
+        coerceLiteralToDouble(right)
+      );
     }
   }
 
@@ -115,7 +122,7 @@ const coerceOperatorPlus = (
       return charOperatorPlus(left, right);
     }
 
-    return intOperatorPlus(coerceToInt(left), coerceToInt(right));
+    return intOperatorPlus(coerceLiteralToInt(left), coerceLiteralToInt(right));
   }
 
   const leftIsString = left.literal.nodeType === "string";
@@ -123,7 +130,10 @@ const coerceOperatorPlus = (
   const bothCharOrString =
     (leftIsChar || leftIsString) && (rightIsChar || rightIsString);
   if (bothCharOrString) {
-    return stringOperatorPlus(coerceToString(left), coerceToString(right));
+    return stringOperatorPlus(
+      coerceLiteralToString(left),
+      coerceLiteralToString(right)
+    );
   }
 
   throw Error(
@@ -210,7 +220,10 @@ const coerceOperatorMinus = (
     if (bothInt) {
       return intOperatorMinus(left, right);
     }
-    return doubleOperatorMinus(coerceToDouble(left), coerceToDouble(right));
+    return doubleOperatorMinus(
+      coerceLiteralToDouble(left),
+      coerceLiteralToDouble(right)
+    );
   }
 
   const leftIsChar = left.literal.nodeType === "char";
@@ -223,7 +236,10 @@ const coerceOperatorMinus = (
     if (bothChar) {
       return charOperatorMinus(left, right);
     }
-    return intOperatorMinus(coerceToInt(left), coerceToInt(right));
+    return intOperatorMinus(
+      coerceLiteralToInt(left),
+      coerceLiteralToInt(right)
+    );
   }
 
   if (
@@ -317,7 +333,10 @@ const coerceOperatorMultiply = (
     if (bothInt) {
       return intOperatorMultiply(left, right);
     }
-    return doubleOperatorMultiply(coerceToDouble(left), coerceToDouble(right));
+    return doubleOperatorMultiply(
+      coerceLiteralToDouble(left),
+      coerceLiteralToDouble(right)
+    );
   }
 
   const leftIsChar = left.literal.nodeType === "char";
@@ -330,7 +349,10 @@ const coerceOperatorMultiply = (
     if (bothChar) {
       return charOperatorMultiply(left, right);
     }
-    return intOperatorMultiply(coerceToInt(left), coerceToInt(right));
+    return intOperatorMultiply(
+      coerceLiteralToInt(left),
+      coerceLiteralToInt(right)
+    );
   }
 
   throw Error(
@@ -354,8 +376,8 @@ const intOperatorDivide = (
     nodeType: "literal",
     literal: {
       nodeType: "int",
-      int: (
-        Math.floor(parseInt(left.literal.int) / parseInt(right.literal.int))
+      int: Math.floor(
+        parseInt(left.literal.int) / parseInt(right.literal.int)
       ).toString(),
     },
   };
@@ -396,7 +418,9 @@ const charOperatorDivide = (
     literal: {
       nodeType: "char",
       char: String.fromCharCode(
-        Math.floor(left.literal.char.charCodeAt(0) / right.literal.char.charCodeAt(0))
+        Math.floor(
+          left.literal.char.charCodeAt(0) / right.literal.char.charCodeAt(0)
+        )
       ),
     },
   };
@@ -417,7 +441,10 @@ const coerceOperatorDivide = (
     if (bothInt) {
       return intOperatorDivide(left, right);
     }
-    return doubleOperatorDivide(coerceToDouble(left), coerceToDouble(right));
+    return doubleOperatorDivide(
+      coerceLiteralToDouble(left),
+      coerceLiteralToDouble(right)
+    );
   }
 
   const leftIsChar = left.literal.nodeType === "char";
@@ -430,7 +457,10 @@ const coerceOperatorDivide = (
     if (bothChar) {
       return charOperatorDivide(left, right);
     }
-    return intOperatorDivide(coerceToInt(left), coerceToInt(right));
+    return intOperatorDivide(
+      coerceLiteralToInt(left),
+      coerceLiteralToInt(right)
+    );
   }
 
   throw Error(

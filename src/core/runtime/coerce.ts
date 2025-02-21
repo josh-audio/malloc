@@ -1,6 +1,7 @@
 import { LiteralNode, TypeNode } from "../grammar_output_validator";
+import { RuntimeValueNode } from "./engine";
 
-const coerceToInt = (value: LiteralNode): LiteralNode => {
+const coerceLiteralToInt = (value: LiteralNode): LiteralNode => {
   if (value.literal.nodeType === "int") {
     return value;
   } else if (value.literal.nodeType === "double") {
@@ -26,7 +27,7 @@ const coerceToInt = (value: LiteralNode): LiteralNode => {
   }
 };
 
-const coerceToDouble = (value: LiteralNode): LiteralNode => {
+const coerceLiteralToDouble = (value: LiteralNode): LiteralNode => {
   if (value.literal.nodeType === "double") {
     return value;
   } else if (value.literal.nodeType === "int") {
@@ -44,7 +45,7 @@ const coerceToDouble = (value: LiteralNode): LiteralNode => {
   }
 };
 
-const coerceToChar = (value: LiteralNode): LiteralNode => {
+const coerceLiteralToChar = (value: LiteralNode): LiteralNode => {
   if (value.literal.nodeType === "char") {
     return value;
   } else if (value.literal.nodeType === "string") {
@@ -70,7 +71,7 @@ const coerceToChar = (value: LiteralNode): LiteralNode => {
   }
 };
 
-const coerceToString = (value: LiteralNode): LiteralNode => {
+const coerceLiteralToString = (value: LiteralNode): LiteralNode => {
   if (value.literal.nodeType === "string") {
     return value;
   } else if (value.literal.nodeType === "char") {
@@ -88,18 +89,48 @@ const coerceToString = (value: LiteralNode): LiteralNode => {
   }
 };
 
-const coerce = (value: LiteralNode, type: TypeNode): LiteralNode => {
+const coerce = (value: RuntimeValueNode, type: TypeNode): RuntimeValueNode => {
+  if (value.value.nodeType !== "literal") {
+    throw Error(
+      `Internal error: coerce: Unexpected value node with type: "${value.value.nodeType}".`
+    );
+  }
+
   if (type.type === "int" || type.type.includes("*")) {
-    return coerceToInt(value);
+    return {
+      nodeType: "runtimeValue",
+      type: type,
+      value: coerceLiteralToInt(value.value),
+    };
   } else if (type.type === "double") {
-    return coerceToDouble(value);
+    return {
+      nodeType: "runtimeValue",
+      type: type,
+      value: coerceLiteralToDouble(value.value),
+    };
   } else if (type.type === "char") {
-    return coerceToChar(value);
+    return {
+      nodeType: "runtimeValue",
+      type: type,
+      value: coerceLiteralToChar(value.value),
+    };
   } else if (type.type === "string") {
-    return coerceToString(value);
+    return {
+      nodeType: "runtimeValue",
+      type: type,
+      value: coerceLiteralToString(value.value),
+    };
   } else {
-    throw Error(`Internal error: Unexpected type node with type: "${type.nodeType}".`);
+    throw Error(
+      `Internal error: Unexpected type node with type: "${type.nodeType}".`
+    );
   }
 };
 
-export { coerceToInt, coerceToDouble, coerceToChar, coerceToString, coerce };
+export {
+  coerceLiteralToInt,
+  coerceLiteralToDouble,
+  coerceLiteralToChar,
+  coerceLiteralToString,
+  coerce,
+};

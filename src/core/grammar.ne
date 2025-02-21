@@ -109,11 +109,11 @@ cast -> "(" _ type _ ")" _ statement {%
   }
 %}
 
-dereference -> "*" _ identifier {%
+dereference -> "*" _ statement {%
   function(data) {
     return {
       nodeType: 'dereference',
-      identifier: data[2]
+      statement: data[2]
     }
   }
 %}

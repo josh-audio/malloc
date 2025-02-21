@@ -100,15 +100,18 @@ class Controller {
 
         if (result.nodeType === "void") {
           outputResult = "void";
-        } else if (result.nodeType === "literal") {
-          if (result.literal.nodeType === "char") {
-            outputResult = `'${result.literal.char}'`;
-          } else if (result.literal.nodeType === "string") {
-            outputResult = `"${result.literal.string}"`;
-          } else if (result.literal.nodeType === "int") {
-            outputResult = result.literal.int;
-          } else if (result.literal.nodeType === "double") {
-            outputResult = result.literal.double;
+        } else if (
+          result.nodeType === "runtimeValue" &&
+          result.value.nodeType === "literal"
+        ) {
+          if (result.value.literal.nodeType === "char") {
+            outputResult = `'${result.value.literal.char}'`;
+          } else if (result.value.literal.nodeType === "string") {
+            outputResult = `"${result.value.literal.string}"`;
+          } else if (result.value.literal.nodeType === "int") {
+            outputResult = result.value.literal.int;
+          } else if (result.value.literal.nodeType === "double") {
+            outputResult = result.value.literal.double;
           }
         }
 
@@ -162,23 +165,24 @@ class Controller {
     let createNewBlock = true;
 
     for (let i = 0; i < state.heap.length; i++) {
-      // The first 2 cells are reserved by the simulator, and should be in their
+      // The first 3 cells are reserved by the simulator, and should be in their
       // own group:
       // 0. The null pointer
       // 1. The free list pointer
-      if (createNewBlock || i === 2) {
+      // 2. The "next fit" next free block pointer
+      if (createNewBlock || i === 3) {
         if (block !== undefined) {
           result.blocks.push(block);
         }
 
-        block = { cells: [], isAllocated: i < 2 };
+        block = { cells: [], isAllocated: i < 3 };
       }
 
       block!.cells.push({
         value: state.heap[i],
         index: i,
         isAllocated: false,
-        isReserved: i < 2,
+        isReserved: i < 3,
       });
 
       createNewBlock = false; // TODO - We'll need to eventually read the free list to know when to create a new block

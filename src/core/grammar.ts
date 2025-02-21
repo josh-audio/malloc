@@ -119,11 +119,11 @@ const grammar: nearley.CompiledRules = {
           }
         }
         },
-    {"name": "dereference", "symbols": [{"literal":"*"}, "_", "identifier"], "postprocess": 
+    {"name": "dereference", "symbols": [{"literal":"*"}, "_", "statement"], "postprocess": 
         function(data) {
           return {
             nodeType: 'dereference',
-            identifier: data[2]
+            statement: data[2]
           }
         }
         },

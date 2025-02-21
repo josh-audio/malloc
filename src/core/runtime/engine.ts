@@ -1,12 +1,11 @@
 import state from "../../state/state";
 import {
   DeclarationNode,
-  DereferenceNode,
   LiteralNode,
   StatementNode,
   TypeNode,
 } from "../grammar_output_validator";
-import { coerce, coerceToChar, coerceToInt } from "./coerce";
+import { coerce, coerceLiteralToChar, coerceLiteralToInt } from "./coerce";
 import { mallocImpl } from "./malloc_impl";
 import {
   coerceOperatorDivide,
@@ -23,21 +22,21 @@ type VoidNode = {
 type NativeFunctionDefinitionNode = {
   nodeType: "nativeFunctionDefinition";
   arguments: DeclarationNode[];
-  body: (args: LiteralNode[]) => LiteralNode | VoidNode;
+  body: (args: RuntimeValueNode[]) => RuntimeValueNode | VoidNode;
 };
 
-type VariableNode = {
-  nodeType: "variableValue";
+type RuntimeValueNode = {
+  nodeType: "runtimeValue";
   type: TypeNode;
   value: LiteralNode | NativeFunctionDefinitionNode;
 };
 
-type Scope = Record<string, VariableNode>;
+type Scope = Record<string, RuntimeValueNode>;
 
 class Engine {
   globalScope: Scope = {
     malloc: {
-      nodeType: "variableValue",
+      nodeType: "runtimeValue",
       type: {
         nodeType: "type",
         type: "nativeFunction",
@@ -60,11 +59,12 @@ class Engine {
             },
           },
         ],
-        body: (args: LiteralNode[]) => mallocImpl(engine.globalScope, args),
+        body: (args: RuntimeValueNode[]) =>
+          mallocImpl(engine.globalScope, args),
       },
     },
     clear: {
-      nodeType: "variableValue",
+      nodeType: "runtimeValue",
       type: {
         nodeType: "type",
         type: "nativeFunction",
@@ -80,7 +80,7 @@ class Engine {
     },
 
     setDisplayBase: {
-      nodeType: "variableValue",
+      nodeType: "runtimeValue",
       type: {
         nodeType: "type",
         type: "nativeFunction",
@@ -103,14 +103,20 @@ class Engine {
             },
           },
         ],
-        body: (args: LiteralNode[]) => {
-          if (args[0].literal.nodeType !== "int") {
+        body: (args: RuntimeValueNode[]) => {
+          if (args[0].value.nodeType !== "literal") {
             throw new Error(
-              `Internal error: Expected argument 0 to be of type int, but got ${args[0].literal.nodeType}.`
+              `Runtime error: Expected argument 0 to be of type int, but got ${args[0].value.nodeType}.`
             );
           }
 
-          const base = parseInt(args[0].literal.int);
+          if (args[0].value.literal.nodeType !== "int") {
+            throw new Error(
+              `Internal error: Expected argument 0 to be of type int, but got ${args[0].value.literal.nodeType}.`
+            );
+          }
+
+          const base = parseInt(args[0].value.literal.int);
 
           if (base !== 10 && base !== 16) {
             throw new Error(
@@ -130,9 +136,18 @@ class Engine {
   // statement evaluates to a value, otherwise returns a void node.
   evaluate(
     statement: StatementNode
-  ): LiteralNode | NativeFunctionDefinitionNode | VoidNode {
+  ): RuntimeValueNode | NativeFunctionDefinitionNode | VoidNode {
     if (statement.nodeType === "literal") {
-      return statement;
+      const type: TypeNode = {
+        nodeType: "type",
+        type: statement.literal.nodeType,
+      };
+
+      return {
+        nodeType: "runtimeValue",
+        type: type,
+        value: statement,
+      };
     } else if (statement.nodeType === "operator") {
       const left = this.evaluate(statement.left);
       const right = this.evaluate(statement.right);
@@ -156,17 +171,37 @@ class Engine {
         );
       }
 
-      if (statement.operator === "+") {
-        return coerceOperatorPlus(left, right);
-      } else if (statement.operator === "-") {
-        return coerceOperatorMinus(left, right);
-      } else if (statement.operator === "*") {
-        return coerceOperatorMultiply(left, right);
-      } else if (statement.operator === "/") {
-        return coerceOperatorDivide(left, right);
+      if (left.value.nodeType !== "literal") {
+        throw new Error(
+          `Runtime error: Expected left value to be of type "literal", but got ${left.value.nodeType}.`
+        );
+      } else if (right.value.nodeType !== "literal") {
+        throw new Error(
+          `Runtime error: Expected right value to be of type "literal", but got ${right.value.nodeType}.`
+        );
       }
 
-      throw Error(`Internal error: Unexpected operator ${statement.operator}.`);
+      let literal: LiteralNode;
+
+      if (statement.operator === "+") {
+        literal = coerceOperatorPlus(left.value, right.value);
+      } else if (statement.operator === "-") {
+        literal = coerceOperatorMinus(left.value, right.value);
+      } else if (statement.operator === "*") {
+        literal = coerceOperatorMultiply(left.value, right.value);
+      } else if (statement.operator === "/") {
+        literal = coerceOperatorDivide(left.value, right.value);
+      } else {
+        throw Error(
+          `Internal error: Unexpected operator ${statement.operator}.`
+        );
+      }
+
+      return {
+        nodeType: "runtimeValue",
+        type: { nodeType: "type", type: literal.literal.nodeType },
+        value: literal,
+      };
     } else if (statement.nodeType === "cast") {
       const result = this.evaluate(statement.statement);
 
@@ -194,7 +229,7 @@ class Engine {
 
       if (statement.declaration.type.type === "string") {
         this.globalScope[statement.declaration.identifier.identifier] = {
-          nodeType: "variableValue",
+          nodeType: "runtimeValue",
           type: statement.declaration.type,
           value: {
             nodeType: "literal",
@@ -205,20 +240,20 @@ class Engine {
           },
         };
       } else {
-        this.globalScope[statement.declaration.identifier.identifier] = {
-          nodeType: "variableValue",
-          type: statement.declaration.type,
-          value: coerce(
-            {
+        this.globalScope[statement.declaration.identifier.identifier] = coerce(
+          {
+            nodeType: "runtimeValue",
+            type: statement.declaration.type,
+            value: {
               nodeType: "literal",
               literal: {
                 nodeType: "int",
                 int: "0",
               },
             },
-            statement.declaration.type
-          ),
-        };
+          },
+          statement.declaration.type
+        );
       }
 
       return { nodeType: "void" };
@@ -231,15 +266,26 @@ class Engine {
         );
       }
 
-      return value.value;
+      return value;
     } else if (statement.nodeType === "assignment") {
       let address: number | undefined;
 
-      // Evaluate the declaration
       if (statement.left.nodeType === "declaration") {
+        // If the left side is a declaration, evaluate it first
         this.evaluate(statement.left);
       } else if (statement.left.nodeType === "dereference") {
-        address = this.getDereferenceAddress(statement.left);
+        const runtimeValue = this.evaluate(statement.left.statement);
+
+        if (runtimeValue.nodeType === "void") {
+          throw new Error(`Runtime error: Cannot dereference void value.`);
+        }
+
+        if (runtimeValue.nodeType === "nativeFunctionDefinition") {
+          throw new Error(`Type error: Cannot dereference native function.`);
+        }
+
+        // If the left side is a dereference, store the memory address for later
+        address = this.getDereferenceAddress(runtimeValue);
 
         if (address < 0 || address >= state.heap.length) {
           throw new Error(
@@ -259,17 +305,21 @@ class Engine {
         );
       }
 
-      let scopeItem: VariableNode;
+      let scopeItem: RuntimeValueNode;
 
       if (address !== undefined) {
         const coerced = coerce(value, { nodeType: "type", type: "int" });
-        if (coerced.literal.nodeType !== "int") {
+        if (coerced.value.nodeType !== "literal") {
           throw new Error(
-            `Internal error: Expected coerced value to be of type "int", but got ${coerced.literal.nodeType}.`
+            `Internal error: Expected coerced value to be of type "literal", but got ${coerced.value.nodeType}.`
+          );
+        } else if (coerced.value.literal.nodeType !== "int") {
+          throw new Error(
+            `Internal error: Expected coerced value to be of type "int", but got ${coerced.type.type}.`
           );
         }
 
-        const heapValueRaw = parseInt(coerced.literal.int);
+        const heapValueRaw = parseInt(coerced.value.literal.int);
 
         if (heapValueRaw < 0) {
           const value = Math.abs(heapValueRaw) % 256;
@@ -283,25 +333,29 @@ class Engine {
       // Set the value in the global scope
       else if (statement.left.nodeType === "identifier") {
         scopeItem = this.globalScope[statement.left.identifier];
-        scopeItem.value = coerce(value, scopeItem.type);
+        this.globalScope[statement.left.identifier] = coerce(
+          value,
+          scopeItem.type
+        );
       } else if (statement.left.nodeType === "declaration") {
         scopeItem =
           this.globalScope[statement.left.declaration.identifier.identifier];
-        scopeItem.value = coerce(value, statement.left.declaration.type);
+        this.globalScope[statement.left.declaration.identifier.identifier] =
+          coerce(value, statement.left.declaration.type);
       } else {
         throw new Error(
           `Internal error: Unexpected assignment left-hand side node type.`
         );
       }
 
-      return scopeItem.value;
+      return scopeItem;
     } else if (statement.nodeType === "functionCall") {
       const func = this.evaluate(statement.functionName);
 
       if (func.nodeType === "nativeFunctionDefinition") {
         const args = statement.arguments
           .map((arg) => this.evaluate(arg))
-          .filter((arg) => arg.nodeType === "literal");
+          .filter((arg) => arg.nodeType === "runtimeValue");
 
         // Validate argument count
         if (args.length !== func.arguments.length) {
@@ -316,11 +370,9 @@ class Engine {
 
         // Validate argument types
         for (let i = 0; i < args.length; i++) {
-          if (
-            args[i].literal.nodeType !== func.arguments[i].declaration.type.type
-          ) {
+          if (args[i].type.type !== func.arguments[i].declaration.type.type) {
             throw new Error(
-              `Type error: ${statement.functionName.identifier}: Expected argument ${i} to be of type ${func.arguments[i].declaration.type.type}, but got ${args[i].literal.nodeType}.`
+              `Type error: ${statement.functionName.identifier}: Expected argument ${i} to be of type ${func.arguments[i].declaration.type.type}, but got ${args[i].type.type}.`
             );
           }
         }
@@ -332,13 +384,21 @@ class Engine {
         );
       }
     } else if (statement.nodeType === "dereference") {
-      const variable = this.globalScope[statement.identifier.identifier];
+      const runtimeValue = this.evaluate(statement.statement);
 
-      const address = this.getDereferenceAddress(statement);
+      if (runtimeValue.nodeType === "void") {
+        throw new Error(`Runtime error: Cannot dereference void value.`);
+      }
+
+      if (runtimeValue.nodeType === "nativeFunctionDefinition") {
+        throw new Error(`Type error: Cannot dereference native function.`);
+      }
+
+      const address = this.getDereferenceAddress(runtimeValue);
 
       if (address < 0 || address >= state.heap.length) {
         throw new Error(
-          `Runtime error: Address ${address} in variable ${statement.identifier.identifier} is outside of the addressable memory range.`
+          `Runtime error: Address ${address} is outside of the addressable memory range.`
         );
       }
 
@@ -347,13 +407,21 @@ class Engine {
         literal: { nodeType: "int", int: state.heap[address].toString() },
       };
 
-      if (variable.type.type === "int*") {
-        return value;
-      } else if (variable.type.type === "char*") {
-        return coerceToChar(value);
+      if (runtimeValue.type.type === "int*") {
+        return {
+          nodeType: "runtimeValue",
+          type: { nodeType: "type", type: "int" },
+          value: value,
+        };
+      } else if (runtimeValue.type.type === "char*") {
+        return {
+          nodeType: "runtimeValue",
+          type: { nodeType: "type", type: "char" },
+          value: coerceLiteralToChar(value),
+        };
       } else {
         throw new Error(
-          `Internal error: Unexpected pointer type ${variable.type.type}.`
+          `Internal error: Unexpected pointer type ${runtimeValue.type.type}.`
         );
       }
     }
@@ -361,34 +429,24 @@ class Engine {
     throw Error("Internal error: Unexpected statement node type.");
   }
 
-  private getDereferenceAddress(statement: DereferenceNode): number {
-    const variable = this.globalScope[statement.identifier.identifier];
+  private getDereferenceAddress(value: RuntimeValueNode): number {
+    if (value.type.type === "nativeFunction") {
+      throw new Error(`Type error: Cannot dereference native function.`);
+    }
 
-    if (variable === undefined) {
+    if (value.type.type[value.type.type.length - 1] !== "*") {
       throw new Error(
-        `Runtime error: Identifier ${statement.identifier.identifier} is not defined.`
+        `Type error: Cannot dereference non-pointer type ${value.type.type}.`
       );
     }
 
-    if (variable.type.type === "nativeFunction") {
+    if (value.value.nodeType !== "literal") {
       throw new Error(
-        `Type error: Cannot dereference native function ${statement.identifier.identifier}.`
+        `Internal error: Expected variable value to be of type "literal", but got ${value.value.nodeType}.`
       );
     }
 
-    if (variable.type.type[variable.type.type.length - 1] !== "*") {
-      throw new Error(
-        `Type error: Cannot dereference non-pointer type ${variable.type.type}.`
-      );
-    }
-
-    if (variable.value.nodeType !== "literal") {
-      throw new Error(
-        `Internal error: Expected variable value to be of type "literal", but got ${variable.value.nodeType}.`
-      );
-    }
-
-    const coercedValue = coerceToInt(variable.value).literal;
+    const coercedValue = coerceLiteralToInt(value.value).literal;
     if (coercedValue.nodeType !== "int") {
       throw new Error(
         `Internal error: Expected coerced value to be of type "int", but got ${coercedValue.nodeType}.`
@@ -404,4 +462,4 @@ class Engine {
 const engine = new Engine();
 
 export default engine;
-export type { Scope };
+export type { Scope, RuntimeValueNode };
