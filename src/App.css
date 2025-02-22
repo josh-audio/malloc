@@ -177,8 +177,24 @@ html {
   transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
   font-family: 'Source Code Pro', monospace;
   color: #FFF7;
+  cursor: text;
 
   position: relative;
+}
+
+.cell-container input {
+  position: absolute;
+  inset: 0;
+  /* width: 100%;
+  height: 100%; */
+  font-size: 15px;
+  font-family: 'Source Code Pro', monospace;
+  color: transparent;
+  background-color: transparent;
+  caret-color: #FFF7;
+  border: 0;
+  outline: none;
+  text-align: center;
 }
 
 .memory-value {
