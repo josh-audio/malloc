@@ -272,7 +272,7 @@ class Controller {
     const addCellToBlock = (cell: (typeof cellList)[0], i: number) => {
       currentBlock.cells.push({
         isAllocated: cell.isAllocated,
-        isReserved: cell.isReserved,
+        isReserved: cell.isReserved || currentBlock.cells.length < 2,
         value: cell.value,
         error: cell.error,
         index: i,
@@ -345,6 +345,7 @@ class Controller {
         checkMagicNumber = true;
       } else if (checkMagicNumber) {
         if (cell.value !== 0xab) {
+          console.log('magic check')
           currentBlock.cells[0].error = true;
         }
         checkMagicNumber = false;
