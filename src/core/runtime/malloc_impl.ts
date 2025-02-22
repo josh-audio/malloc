@@ -25,6 +25,37 @@ const initMemory = () => {
   }
 };
 
+const getFreeList = (): {
+  startIndex: number;
+  size: number;
+  next: number;
+  sizeError?: true;
+  nextError?: true;
+  regionError?: true;
+}[] => {
+  const freeList: ReturnType<typeof getFreeList> = [];
+
+  let freeListPointer = state.heap[1];
+
+  let iter = 0;
+  while (freeListPointer !== 0) {
+    if (iter > 255) {
+      return [{ startIndex: 3, size: 253, next: 0, regionError: true }];
+    }
+
+    const size = state.heap[freeListPointer];
+    const next = state.heap[freeListPointer + 1];
+
+    freeList.push({ startIndex: freeListPointer, size, next });
+
+    freeListPointer = next;
+
+    iter++;
+  }
+
+  return freeList;
+};
+
 const mallocImpl = (
   scope: Scope,
   args: RuntimeValueNode[]
@@ -45,4 +76,4 @@ const mallocImpl = (
   };
 };
 
-export { mallocImpl, initMemory };
+export { mallocImpl, initMemory, getFreeList };

@@ -3,6 +3,7 @@ import state, { CommandHistoryItem } from "../state/state";
 import engine from "./runtime/engine";
 import grammar from "./grammar";
 import statementSchema from "./grammar_output_validator";
+import { getFreeList } from "./runtime/malloc_impl";
 
 class Controller {
   getPrediction(input: string): string {
@@ -149,50 +150,214 @@ class Controller {
   //
   // Would be nice to refactor this a bit
   getState(): {
-    blocks: {
+    isAllocated: boolean;
+    cells: {
+      isAllocated: boolean;
+      isReserved: boolean;
+      value: number;
+      error: boolean;
+      index: number;
+    }[];
+  }[] {
+    let blockIndexCounter = 0;
+
+    const freeList = getFreeList();
+
+    // List of cells with no grouping. They will be grouped together in the end.
+    const cellList = state.heap.map((cell, index) => {
+      if (index < 3) {
+        return {
+          isAllocated: false,
+          isReserved: true,
+          value: cell,
+          index: -2,
+          error: false,
+        };
+      }
+
+      return {
+        // After adding all free list entries, we will go through and find items
+        // that still have this flag, and treat them as allocated.
+        //
+        // If the memory corrupts then this will completely break, but all sorts
+        // of things will break if the memory is corrupted and that's sort of
+        // the point.
+        isAllocated: true,
+        isReserved: false,
+        value: cell,
+        index: -1,
+        error: false,
+      };
+    });
+
+    // Write free list entries
+    for (const freeListItem of freeList) {
+      const err = freeListItem.size < 2;
+
+      let writeCount = 0;
+      for (
+        let i = freeListItem.startIndex;
+        i < freeListItem.startIndex + freeListItem.size;
+        i++
+      ) {
+        cellList[i].isAllocated = false;
+        cellList[i].isReserved = writeCount < 2;
+        cellList[i].value = state.heap[i];
+        cellList[i].index = blockIndexCounter;
+        cellList[i].error = err;
+
+        writeCount++;
+      }
+
+      blockIndexCounter++;
+    }
+
+    const blocks: ReturnType<Controller["getState"]> = [
+      {
+        isAllocated: false,
+        cells: [
+          {
+            isAllocated: false,
+            isReserved: true,
+            value: state.heap[0],
+            index: 0,
+            error: false,
+          },
+          {
+            isAllocated: false,
+            isReserved: true,
+            value: state.heap[1],
+            index: 1,
+            error: false,
+          },
+          {
+            isAllocated: false,
+            isReserved: true,
+            value: state.heap[2],
+            index: 2,
+            error: false,
+          },
+        ],
+      },
+    ];
+
+    let currentBlock: {
       isAllocated: boolean;
       cells: {
         isAllocated: boolean;
         isReserved: boolean;
         value: number;
+        error: boolean;
         index: number;
       }[];
-    }[];
-  } {
-    const result: ReturnType<Controller["getState"]> = { blocks: [] };
+    } = {
+      isAllocated: false,
+      cells: [],
+    };
 
-    let block: ReturnType<Controller["getState"]>["blocks"][number] | undefined;
-    let createNewBlock = true;
-
-    for (let i = 0; i < state.heap.length; i++) {
-      // The first 3 cells are reserved by the simulator, and should be in their
-      // own group:
-      // 0. The null pointer
-      // 1. The free list pointer
-      // 2. The "next fit" next free block pointer
-      if (createNewBlock || i === 3) {
-        if (block !== undefined) {
-          result.blocks.push(block);
-        }
-
-        block = { cells: [], isAllocated: i < 3 };
+    const startNewBlock = () => {
+      if (currentBlock.cells.length > 0) {
+        currentBlock.isAllocated = currentBlock.cells.some(
+          (cell) => cell.isAllocated
+        );
+        blocks.push(currentBlock);
       }
 
-      block!.cells.push({
-        value: state.heap[i],
-        index: i,
+      currentBlock = {
         isAllocated: false,
-        isReserved: i < 3,
+        cells: [],
+      };
+    };
+
+    const addCellToBlock = (cell: (typeof cellList)[0], i: number) => {
+      currentBlock.cells.push({
+        isAllocated: cell.isAllocated,
+        isReserved: cell.isReserved,
+        value: cell.value,
+        error: cell.error,
+        index: i,
       });
+    };
 
-      createNewBlock = false; // TODO - We'll need to eventually read the free list to know when to create a new block
+    let stateMachine: "unknown" | "free" | "allocated" = "unknown";
+    let remainingCells = 0;
+    let checkMagicNumber = false;
+    for (let i = 3; i < cellList.length; i++) {
+      const cell = cellList[i];
+
+      let checkMagicNumberNext = false;
+
+      if (stateMachine === "unknown") {
+        if (cell.isAllocated) {
+          stateMachine = "allocated";
+          checkMagicNumberNext = true;
+        } else {
+          stateMachine = "free";
+        }
+        remainingCells = cell.value;
+
+        addCellToBlock(cell, i);
+
+        continue;
+      }
+
+      if (remainingCells === 0) {
+        startNewBlock();
+        stateMachine = "unknown";
+        checkMagicNumber = false;
+        checkMagicNumberNext = false;
+        i--; // Re-process this cell
+        continue;
+      }
+
+      if (stateMachine === "free" && cell.isAllocated) {
+        stateMachine = "allocated";
+
+        // If we reached here before the end of the block, we need to start a
+        // new block, but the last block's size was invalid
+        currentBlock.cells[0].error = true;
+
+        startNewBlock();
+
+        remainingCells = cell.value;
+        checkMagicNumber = false;
+        checkMagicNumberNext = true;
+
+        addCellToBlock(cell, i);
+
+        continue;
+      } else if (stateMachine === "allocated" && !cell.isAllocated) {
+        stateMachine = "free";
+        currentBlock.cells[0].error = true;
+
+        startNewBlock();
+
+        remainingCells = cell.value;
+        checkMagicNumber = false;
+        checkMagicNumberNext = true;
+
+        addCellToBlock(cell, i);
+
+        continue;
+      }
+
+      if (checkMagicNumberNext) {
+        checkMagicNumber = true;
+      } else if (checkMagicNumber) {
+        if (cell.value !== 0xab) {
+          currentBlock.cells[0].error = true;
+        }
+        checkMagicNumber = false;
+      }
+
+      addCellToBlock(cell, i);
+
+      remainingCells--;
     }
 
-    if (block !== undefined) {
-      result.blocks.push(block);
-    }
+    startNewBlock(); // Adds the last block
 
-    return result;
+    return blocks;
   }
 }
 

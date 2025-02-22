@@ -3,7 +3,7 @@ import state from "../state/state";
 
 const MemoryCell = observer(
   (props: {
-    cellState: { index: number; isAllocated: boolean; isReserved: boolean };
+    cellState: { index: number; isAllocated: boolean; isReserved: boolean; error: boolean; };
   }) => {
     const base = state.displayBase;
 
@@ -22,7 +22,8 @@ const MemoryCell = observer(
         className={
           "cell-container" +
           (props.cellState.isAllocated ? " allocated" : " unallocated") +
-          (props.cellState.isReserved ? " reserved" : " unreserved")
+          (props.cellState.isReserved ? " reserved" : " unreserved") + 
+          (props.cellState.error ? " error" : "")
         }
       >
         <div className="memory-value">{value}</div>

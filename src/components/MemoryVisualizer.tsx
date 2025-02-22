@@ -7,7 +7,7 @@ const MemoryVisualizer = observer(() => {
 
   return (
     <div className="memory-container">
-      {memoryState.blocks.map((elem, index) => {
+      {memoryState.map((elem, index) => {
         return <MemoryBlock key={index} blockState={elem} />;
       })}
     </div>

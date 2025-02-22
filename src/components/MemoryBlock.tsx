@@ -2,7 +2,7 @@ import MemoryCell from "./MemoryCell.tsx";
 
 const MemoryBlock = (props: {
   blockState: {
-    cells: { index: number; isAllocated: boolean; isReserved: boolean }[];
+    cells: { index: number; isAllocated: boolean; isReserved: boolean; error: boolean; }[];
   };
 }) => {
   return (
