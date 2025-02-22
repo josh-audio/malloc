@@ -1,14 +1,21 @@
 import { observer } from "mobx-react";
 import controller from "../core/controller";
-import MemoryBlock from "./MemoryBlock";
+import MemoryCell from "./MemoryCell";
 
 const MemoryVisualizer = observer(() => {
   const memoryState = controller.getState();
 
   return (
     <div className="memory-container">
-      {memoryState.map((elem, index) => {
-        return <MemoryBlock key={index} blockState={elem} />;
+      {memoryState.map((block, blockIndex) => {
+        return block.cells.map((cell, cellIndex) => (
+          <MemoryCell
+            key={`${blockIndex}-${cellIndex}`}
+            cellState={cell}
+            blockStart={cellIndex === 0}
+            blockEnd={cellIndex === block.cells.length - 1}
+          />
+        ));
       })}
     </div>
   );

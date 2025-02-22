@@ -197,6 +197,19 @@ html {
   text-align: center;
 }
 
+.cell-container.block-start {
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+  padding-left: 8px;
+}
+
+.cell-container.block-end {
+  margin-right: 20px;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
+  border-right: 1px solid #ffffff08;
+}
+
 .memory-value {
   position: absolute;
   inset: 0;
@@ -220,19 +233,6 @@ html {
   height: 12px;
   line-height: 12px;
   color: #FFF3;
-}
-
-.cell-container:first-child {
-  border-top-left-radius: 5px;
-  border-bottom-left-radius: 5px;
-  padding-left: 8px;
-}
-
-.cell-container:last-child {
-  margin-right: 20px;
-  border-top-right-radius: 5px;
-  border-bottom-right-radius: 5px;
-  border-right: 1px solid #ffffff08;
 }
 
 .memory-block-container:last-child .cell-container:last-child {
