@@ -192,12 +192,14 @@ class Controller {
 
     // Write free list entries
     for (const freeListItem of freeList) {
-      const err = freeListItem.size < 2;
+      const err =
+        freeListItem.size < 2 ||
+        freeListItem.startIndex + freeListItem.size > cellList.length;
 
       let writeCount = 0;
       for (
         let i = freeListItem.startIndex;
-        i < freeListItem.startIndex + freeListItem.size;
+        i < freeListItem.startIndex + freeListItem.size && i < cellList.length;
         i++
       ) {
         cellList[i].isAllocated = false;
@@ -345,7 +347,6 @@ class Controller {
         checkMagicNumber = true;
       } else if (checkMagicNumber) {
         if (cell.value !== 0xab) {
-          console.log('magic check')
           currentBlock.cells[0].error = true;
         }
         checkMagicNumber = false;
