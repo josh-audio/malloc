@@ -7,16 +7,21 @@ const MemoryVisualizer = observer(() => {
 
   return (
     <div className="memory-container">
-      {memoryState.map((block, blockIndex) => {
+      {memoryState.map((block) => {
         return block.cells.map((cell, cellIndex) => (
           <MemoryCell
-            key={`${blockIndex}-${cellIndex}`}
+            key={cell.index}
             cellState={cell}
             blockStart={cellIndex === 0}
             blockEnd={cellIndex === block.cells.length - 1}
           />
         ));
-      })}
+      })
+      // .flat() is used to flatten the array of arrays
+      //
+      // Without this, React will not persist the cells in DOM when they move
+      // between groups, and the animation will not work as expected
+      .flat()}
     </div>
   );
 });
