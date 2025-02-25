@@ -2,7 +2,7 @@ import { observer } from "mobx-react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import state from "../state/state";
-import { useEffect } from "react";
+import { Fragment, useEffect } from "react";
 
 function insertNewlines(text: string) {
   return text
@@ -10,10 +10,9 @@ function insertNewlines(text: string) {
     .split("\n")
     .map(function (item, key) {
       return (
-        <span key={key}>
+        <Fragment key={key}>
           {item}
-          <br />
-        </span>
+        </Fragment>
       );
     });
 }
