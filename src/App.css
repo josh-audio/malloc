@@ -174,10 +174,11 @@ html {
   border-left: 1px solid #ffffff08;
   border-top: 1px solid #ffffff08;
   border-bottom: 1px solid #ffffff08;
-  transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
   font-family: 'Source Code Pro', monospace;
   color: #FFF7;
   cursor: text;
+
+  transition: all 1s cubic-bezier(0.19, 1, 0.22, 1);
 
   position: relative;
 }
@@ -185,8 +186,6 @@ html {
 .cell-container input {
   position: absolute;
   inset: 0;
-  /* width: 100%;
-  height: 100%; */
   font-size: 15px;
   font-family: 'Source Code Pro', monospace;
   color: transparent;

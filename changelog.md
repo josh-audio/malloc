@@ -25,7 +25,7 @@
     // a is now "sort of 2.3"
 
     a + 0.7; // -> 2.7
-    ((double) a) + 0.7 // -> 3
+    ((double) a) + 0.7; // -> 3
     ```
 
     Now, these will evaluate to:
@@ -34,7 +34,7 @@
     // a is now 2
 
     a + 0.7; // -> 2.7
-    ((double) a) + 0.7 // -> 2.7
+    ((double) a) + 0.7; // -> 2.7
     ```
 
     Besides addressing some minor bugs, being more careful with types paves the way for better handling of new pointer types - see below for more.
@@ -42,6 +42,7 @@
     ```c
     int *x = (int *) malloc(sizeof(int));
     ```
+
     ```c
     char *src = "hello";
     char *dst = (char *) malloc(strlen(src) + 1);
@@ -67,7 +68,7 @@
     And you can do plenty of more complex things:
     
     ```c
-    // Gets the value at a, casts it to a char*, and writes 10 to that address
+    // Gets the value at heap address a, casts it to a char*, and writes 10 to that address
     *((char*) *a) = 10;
     ```
 
