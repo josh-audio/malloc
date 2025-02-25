@@ -8,12 +8,12 @@ const MemoryVisualizer = observer(() => {
   return (
     <div className="memory-container">
       {memoryState.map((block) => {
-        return block.cells.map((cell, cellIndex) => (
+        return block.map((cell, cellIndex) => (
           <MemoryCell
             key={cell.index}
             cellState={cell}
             blockStart={cellIndex === 0}
-            blockEnd={cellIndex === block.cells.length - 1}
+            blockEnd={cellIndex === block.length - 1}
           />
         ));
       })

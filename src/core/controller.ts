@@ -151,14 +151,11 @@ class Controller {
   // Would be nice to refactor this a bit
   getState(): {
     isAllocated: boolean;
-    cells: {
-      isAllocated: boolean;
-      isReserved: boolean;
-      value: number;
-      error: boolean;
-      index: number;
-    }[];
-  }[] {
+    isReserved: boolean;
+    value: number;
+    error: boolean;
+    index: number;
+  }[][] {
     let blockIndexCounter = 0;
 
     const freeList = getFreeList();
@@ -215,66 +212,51 @@ class Controller {
     }
 
     const blocks: ReturnType<Controller["getState"]> = [
-      {
-        isAllocated: false,
-        cells: [
-          {
-            isAllocated: false,
-            isReserved: true,
-            value: state.heap[0],
-            index: 0,
-            error: false,
-          },
-          {
-            isAllocated: false,
-            isReserved: true,
-            value: state.heap[1],
-            index: 1,
-            error: false,
-          },
-          {
-            isAllocated: false,
-            isReserved: true,
-            value: state.heap[2],
-            index: 2,
-            error: false,
-          },
-        ],
-      },
+      [
+        {
+          isAllocated: false,
+          isReserved: true,
+          value: state.heap[0],
+          index: 0,
+          error: false,
+        },
+        {
+          isAllocated: false,
+          isReserved: true,
+          value: state.heap[1],
+          index: 1,
+          error: false,
+        },
+        {
+          isAllocated: false,
+          isReserved: true,
+          value: state.heap[2],
+          index: 2,
+          error: false,
+        },
+      ],
     ];
 
     let currentBlock: {
       isAllocated: boolean;
-      cells: {
-        isAllocated: boolean;
-        isReserved: boolean;
-        value: number;
-        error: boolean;
-        index: number;
-      }[];
-    } = {
-      isAllocated: false,
-      cells: [],
-    };
+      isReserved: boolean;
+      value: number;
+      error: boolean;
+      index: number;
+    }[] = [];
 
     const startNewBlock = () => {
-      if (currentBlock.cells.length > 0) {
-        currentBlock.isAllocated = currentBlock.cells.some(
-          (cell) => cell.isAllocated
-        );
+      if (currentBlock.length > 0) {
         blocks.push(currentBlock);
       }
 
-      currentBlock = {
-        isAllocated: false,
-        cells: [],
-      };
+      currentBlock = [];
     };
 
     const addCellToBlock = (cell: (typeof cellList)[0], i: number) => {
-      currentBlock.cells.push({
+      currentBlock.push({
         isAllocated: cell.isAllocated,
-        isReserved: cell.isReserved || currentBlock.cells.length < 2,
+        isReserved: cell.isReserved || currentBlock.length < 2,
         value: cell.value,
         error: cell.error,
         index: i,
@@ -317,7 +299,7 @@ class Controller {
 
         // If we reached here before the end of the block, we need to start a
         // new block, but the last block's size was invalid
-        currentBlock.cells[0].error = true;
+        currentBlock[0].error = true;
 
         startNewBlock();
 
@@ -330,7 +312,7 @@ class Controller {
         continue;
       } else if (stateMachine === "allocated" && !cell.isAllocated) {
         stateMachine = "free";
-        currentBlock.cells[0].error = true;
+        currentBlock[0].error = true;
 
         startNewBlock();
 
@@ -347,7 +329,7 @@ class Controller {
         checkMagicNumber = true;
       } else if (checkMagicNumber) {
         if (cell.value !== 0xab) {
-          currentBlock.cells[0].error = true;
+          currentBlock[0].error = true;
         }
         checkMagicNumber = false;
       }
@@ -357,9 +339,46 @@ class Controller {
       remainingCells--;
     }
 
-    startNewBlock(); // Adds the last block
+    // Adds the last block
+    startNewBlock();
 
-    return blocks;
+    // Collapse single-element blocks
+    let lastWasSingle = false;
+    let i = 0;
+    const blockGroups = blocks.map((item) => {
+      if (item.length === 1) {
+        if (!lastWasSingle) {
+          i++;
+        }
+
+        lastWasSingle = true;
+
+        // !!! This mutates the item!
+        //
+        // We don't want to report single-element blocks as reserved or
+        // allocated, because they don't represent a valid allocation or a valid
+        // free list entry.
+        item[0].isReserved = false;
+        item[0].isAllocated = false;
+
+        return i;
+      }
+      
+      lastWasSingle = false;
+      i++;
+      return i;
+    });
+
+    const collapsedBlocks = blockGroups.reduce((acc, cur, index) => {
+      if (acc[cur] === undefined) {
+        acc[cur] = [];
+      }
+
+      acc[cur].push(...blocks[index]);
+      return acc;
+    }, [] as ReturnType<Controller["getState"]>);
+
+    return collapsedBlocks;
   }
 }
 
