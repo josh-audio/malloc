@@ -1,6 +1,11 @@
 import state from "../../state/state";
 import { RuntimeValueNode, Scope } from "./engine";
 
+const FIRST_FIT = 0;
+const NEXT_FIT = 1;
+const BEST_FIT = 2;
+const WORST_FIT = 3;
+
 const initMemory = () => {
   state.heap.splice(0, state.heap.length);
   for (let i = 0; i < 256; i++) {
@@ -76,4 +81,12 @@ const mallocImpl = (
   };
 };
 
-export { mallocImpl, initMemory, getFreeList };
+export {
+  mallocImpl,
+  initMemory,
+  getFreeList,
+  FIRST_FIT,
+  NEXT_FIT,
+  BEST_FIT,
+  WORST_FIT,
+};

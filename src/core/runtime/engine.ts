@@ -6,7 +6,14 @@ import {
   TypeNode,
 } from "../grammar_output_validator";
 import { coerce, coerceLiteralToChar, coerceLiteralToInt } from "./coerce";
-import { initMemory, mallocImpl } from "./malloc_impl";
+import {
+  BEST_FIT,
+  FIRST_FIT,
+  initMemory,
+  mallocImpl,
+  NEXT_FIT,
+  WORST_FIT,
+} from "./malloc_impl";
 import {
   coerceOperatorDivide,
   coerceOperatorMinus,
@@ -225,7 +232,130 @@ class Engine {
           initMemory();
           return { nodeType: "void" };
         },
-      }
+      },
+    },
+
+    FIRST_FIT: {
+      nodeType: "runtimeValue",
+      type: {
+        nodeType: "type",
+        type: "int",
+      },
+      value: {
+        nodeType: "literal",
+        literal: {
+          nodeType: "int",
+          int: FIRST_FIT,
+        },
+      },
+    },
+
+    NEXT_FIT: {
+      nodeType: "runtimeValue",
+      type: {
+        nodeType: "type",
+        type: "int",
+      },
+      value: {
+        nodeType: "literal",
+        literal: {
+          nodeType: "int",
+          int: NEXT_FIT,
+        },
+      },
+    },
+
+    BEST_FIT: {
+      nodeType: "runtimeValue",
+      type: {
+        nodeType: "type",
+        type: "int",
+      },
+      value: {
+        nodeType: "literal",
+        literal: {
+          nodeType: "int",
+          int: BEST_FIT,
+        },
+      },
+    },
+
+    WORST_FIT: {
+      nodeType: "runtimeValue",
+      type: {
+        nodeType: "type",
+        type: "int",
+      },
+      value: {
+        nodeType: "literal",
+        literal: {
+          nodeType: "int",
+          int: WORST_FIT,
+        },
+      },
+    },
+
+    setMemoryAllocationStrategy: {
+      nodeType: "runtimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [
+          {
+            nodeType: "declaration",
+            declaration: {
+              nodeType: "singleDeclaration",
+              identifier: {
+                nodeType: "identifier",
+                identifier: "strategy",
+              },
+              type: {
+                nodeType: "type",
+                type: "int",
+              },
+            },
+          },
+        ],
+        body: (args: (RuntimeValueNode | TypeNode)[]) => {
+          if (args[0].nodeType === "type") {
+            throw new Error(
+              `Runtime error: Cannot call setMemoryAllocationStrategy with a type`
+            );
+          }
+
+          if (args[0].value.nodeType !== "literal") {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type int, but got ${args[0].value.nodeType}.`
+            );
+          }
+
+          if (args[0].value.literal.nodeType !== "int") {
+            throw new Error(
+              `Internal error: Expected argument 0 to be of type int, but got ${args[0].value.literal.nodeType}.`
+            );
+          }
+
+          const strategy = args[0].value.literal.int;
+
+          if (
+            strategy !== FIRST_FIT &&
+            strategy !== NEXT_FIT &&
+            strategy !== BEST_FIT &&
+            strategy !== WORST_FIT
+          ) {
+            throw new Error(
+              `Runtime error: Invalid memory allocation strategy ${strategy}. Must be one of FIRST_FIT, NEXT_FIT, BEST_FIT, or WORST_FIT.`
+            );
+          }
+
+          state.memoryAllocationStrategy = strategy;
+
+          return { nodeType: "void" };
+        },
+      },
     }
   };
 
