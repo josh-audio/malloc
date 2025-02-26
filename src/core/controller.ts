@@ -281,7 +281,7 @@ class Controller {
         } else {
           stateMachine = "free";
         }
-        remainingCells = cell.value;
+        remainingCells = Math.max(cell.value - 1, 0);
 
         addCellToBlock(cell, i);
 
@@ -302,11 +302,11 @@ class Controller {
 
         // If we reached here before the end of the block, we need to start a
         // new block, but the last block's size was invalid
-        currentBlock[0].error = true;
+        cell.error = true;
 
         startNewBlock();
 
-        remainingCells = cell.value;
+        remainingCells = Math.max(cell.value - 1, 0);
         checkMagicNumber = false;
         checkMagicNumberNext = true;
 
@@ -315,7 +315,7 @@ class Controller {
         continue;
       } else if (stateMachine === "allocated" && !cell.isAllocated) {
         stateMachine = "free";
-        currentBlock[0].error = true;
+        cell.error = true;
 
         startNewBlock();
 
@@ -330,9 +330,10 @@ class Controller {
 
       if (checkMagicNumberNext) {
         checkMagicNumber = true;
+        checkMagicNumberNext = false;
       } else if (checkMagicNumber) {
         if (cell.value !== 0xab) {
-          currentBlock[0].error = true;
+          cell.error = true;
         }
         checkMagicNumber = false;
       }

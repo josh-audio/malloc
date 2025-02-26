@@ -128,8 +128,6 @@ const mallocImpl = (
   if (state.memoryAllocationStrategy === FIRST_FIT) {
     for (let i = 0; i < freeList.length; i++) {
       const block = freeList[i];
-      console.log(block);
-      console.log(sizeWithHeader);
 
       if (block.size >= sizeWithHeader) {
         const next = block.next;
