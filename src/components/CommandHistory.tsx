@@ -9,11 +9,7 @@ function insertNewlines(text: string) {
     .replace(/ /g, " ")
     .split("\n")
     .map(function (item, key) {
-      return (
-        <Fragment key={key}>
-          {item}
-        </Fragment>
-      );
+      return <Fragment key={key}>{item}</Fragment>;
     });
 }
 
@@ -36,23 +32,19 @@ function HistoryItem(props: {
   );
 }
 
-const CommandHistory = observer(
-  () => {
-    useEffect(() => {
-      const scrollArea = document.querySelector(
-        ".command-history-container"
-      )!;
-      scrollArea.scrollTop = scrollArea.scrollHeight;
-    });
+const CommandHistory = observer(() => {
+  useEffect(() => {
+    const scrollArea = document.querySelector(".command-history-container")!;
+    scrollArea.scrollTop = scrollArea.scrollHeight;
+  });
 
-    return (
-      <div className="command-history-container">
-        {state.commandHistory.map((historyItem, index) => (
-          <HistoryItem key={index} historyItem={historyItem} index={index} />
-        ))}
-      </div>
-    );
-  }
-);
+  return (
+    <div className="command-history-container">
+      {state.commandHistory.map((historyItem, index) => (
+        <HistoryItem key={index} historyItem={historyItem} index={index} />
+      ))}
+    </div>
+  );
+});
 
 export default CommandHistory;

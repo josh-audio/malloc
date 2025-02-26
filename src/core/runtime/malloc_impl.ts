@@ -68,19 +68,31 @@ const mallocImpl = (
   const sizeArg = args[0];
 
   if (sizeArg.nodeType !== "runtimeValue") {
-    throw new Error("Type error: Invalid type for malloc size. Expected runtimeValue, got " + sizeArg.nodeType);
+    throw new Error(
+      "Type error: Invalid type for malloc size. Expected runtimeValue, got " +
+        sizeArg.nodeType
+    );
   }
 
   if (sizeArg.type.type !== "int") {
-    throw new Error("Type error: Invalid type for malloc size. Expected int, got " + sizeArg.type.type);
+    throw new Error(
+      "Type error: Invalid type for malloc size. Expected int, got " +
+        sizeArg.type.type
+    );
   }
 
   if (sizeArg.value.nodeType !== "literal") {
-    throw new Error("Type error: Invalid type for malloc size. Expected literal, got " + sizeArg.value.nodeType);
+    throw new Error(
+      "Type error: Invalid type for malloc size. Expected literal, got " +
+        sizeArg.value.nodeType
+    );
   }
 
   if (sizeArg.value.literal.nodeType !== "int") {
-    throw new Error("Internal error: Mismatched literal type for malloc size. Expected int, got " + sizeArg.value.literal.nodeType);
+    throw new Error(
+      "Internal error: Mismatched literal type for malloc size. Expected int, got " +
+        sizeArg.value.literal.nodeType
+    );
   }
 
   const size = sizeArg.value.literal.int;
@@ -115,13 +127,13 @@ const mallocImpl = (
 
   const writeAllocatedBlockHeader = (index: number) => {
     state.heap[index] = size + 2;
-    state.heap[index + 1] = 0xAB; // Allocated block marker - AKA "magic value" according to OSTEP
-  }
+    state.heap[index + 1] = 0xab; // Allocated block marker - AKA "magic value" according to OSTEP
+  };
 
   const writeFreeBlockHeader = (index: number, size: number, next: number) => {
     state.heap[index] = size;
     state.heap[index + 1] = next;
-  }
+  };
 
   const sizeWithHeader = size + 2;
 

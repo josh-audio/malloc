@@ -43,8 +43,8 @@ const MemoryCell = observer(
           "cell-container" +
           (props.cellState.isAllocated ? " allocated" : " unallocated") +
           (props.cellState.isReserved ? " reserved" : " unreserved") +
-          (props.cellState.error ? " error" : "") + 
-          (props.blockStart ? " block-start" : "") + 
+          (props.cellState.error ? " error" : "") +
+          (props.blockStart ? " block-start" : "") +
           (props.blockEnd ? " block-end" : "")
         }
         onClick={() => {

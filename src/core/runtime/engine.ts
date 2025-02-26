@@ -363,7 +363,7 @@ class Engine {
           return { nodeType: "void" };
         },
       },
-    }
+    },
   };
 
   // Recursively evaluates the given statement. Returns a literal node if the
