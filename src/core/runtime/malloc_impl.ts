@@ -125,39 +125,82 @@ const mallocImpl = (
     };
   }
 
-  const writeAllocatedBlockHeader = (index: number) => {
-    state.heap[index] = size + 2;
-    state.heap[index + 1] = 0xab; // Allocated block marker - AKA "magic value" according to OSTEP
+  const writeToHeap = (index: number, value: number) => {
+    if (index >= state.heap.length || index < 0) {
+      return;
+    }
+
+    state.heap[index] = Math.max(0, Math.min(value, 255));
+  };
+
+  const writeAllocatedBlockHeader = (index: number, size: number) => {
+    writeToHeap(index, size);
+    writeToHeap(index + 1, 0xab); // Allocated block marker - AKA "magic value" according to OSTEP
   };
 
   const writeFreeBlockHeader = (index: number, size: number, next: number) => {
-    state.heap[index] = size;
-    state.heap[index + 1] = next;
+    writeToHeap(index, size);
+    writeToHeap(index + 1, next);
   };
 
   const sizeWithHeader = size + 2;
 
   if (state.memoryAllocationStrategy === FIRST_FIT) {
     for (let i = 0; i < freeList.length; i++) {
+      const hasPrevious = i > 0;
+      const hasNext = i + 1 < freeList.length;
+
       const block = freeList[i];
 
       if (block.size >= sizeWithHeader) {
         const next = block.next;
 
         const newBlockStart = block.startIndex;
-        const newBlockEnd = block.startIndex + sizeWithHeader;
 
-        writeAllocatedBlockHeader(newBlockStart);
+        let allocatedSize = size + 2;
 
-        if (block.size > sizeWithHeader) {
-          writeFreeBlockHeader(newBlockEnd, block.size - sizeWithHeader, next);
+        if (block.size - allocatedSize < 3) {
+          // There's not enough space for a free block header plus at least one
+          // byte of free space, so we will hand out the entire block
+          allocatedSize = block.size;
         }
 
-        if (i === 0) {
-          state.heap[1] = newBlockEnd;
+        const newBlockEnd = block.startIndex + allocatedSize;
+
+        writeAllocatedBlockHeader(newBlockStart, allocatedSize);
+
+        let newSplitFreeBlockIndex: number | undefined = undefined;
+
+        // If we have enough space left over to create a new free block, we
+        // need to split the block
+        if (block.size - allocatedSize >= 3) {
+          writeFreeBlockHeader(newBlockEnd, block.size - sizeWithHeader, next);
+          newSplitFreeBlockIndex = newBlockEnd;
+        }
+
+        let nextFreeListEntryPtr = -1;
+
+        // If we just filled the first block in the free list, we need to
+        // update the free list pointer, since the free list pointer should
+        // always point to the first block in the free list
+        if (hasNext) {
+          nextFreeListEntryPtr = freeList[i + 1].startIndex;
         } else {
+          if (newSplitFreeBlockIndex !== undefined) {
+            nextFreeListEntryPtr = newSplitFreeBlockIndex;
+          } else {
+            // If we just filled the last block in the free list, we need to
+            // update the free list pointer to 0
+            nextFreeListEntryPtr = 0;
+          }
+        }
+
+        if (!hasPrevious) {
+          writeToHeap(1, nextFreeListEntryPtr);
+        } else {
+          // We need to update the previous block's next pointer
           const prev = freeList[i - 1].startIndex;
-          state.heap[prev + 1] = newBlockEnd;
+          writeToHeap(prev + 1, nextFreeListEntryPtr);
         }
 
         return {
