@@ -24,7 +24,11 @@ function getDefaultCommandHistory(): CommandHistoryItem[] {
 
 class State {
   displayBase: 10 | 16 = 10;
-  memoryAllocationStrategy: typeof FIRST_FIT | typeof NEXT_FIT | typeof BEST_FIT | typeof WORST_FIT = FIRST_FIT;
+  memoryAllocationStrategy:
+    | typeof FIRST_FIT
+    | typeof NEXT_FIT
+    | typeof BEST_FIT
+    | typeof WORST_FIT = FIRST_FIT;
 
   memorySize: number = 256;
   heap: number[] = [];

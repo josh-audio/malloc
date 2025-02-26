@@ -353,6 +353,13 @@ class Engine {
 
           state.memoryAllocationStrategy = strategy;
 
+          // Set the next fit pointer to the beginning of the free list if needed
+          if (strategy === NEXT_FIT) {
+            state.heap[2] = state.heap[1];
+          } else {
+            state.heap[2] = 0;
+          }
+
           return { nodeType: "void" };
         },
       },

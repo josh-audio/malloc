@@ -65,6 +65,109 @@ const mallocImpl = (
   scope: Scope,
   args: RuntimeValueNode[]
 ): RuntimeValueNode => {
+  const sizeArg = args[0];
+
+  if (sizeArg.nodeType !== "runtimeValue") {
+    throw new Error("Type error: Invalid type for malloc size. Expected runtimeValue, got " + sizeArg.nodeType);
+  }
+
+  if (sizeArg.type.type !== "int") {
+    throw new Error("Type error: Invalid type for malloc size. Expected int, got " + sizeArg.type.type);
+  }
+
+  if (sizeArg.value.nodeType !== "literal") {
+    throw new Error("Type error: Invalid type for malloc size. Expected literal, got " + sizeArg.value.nodeType);
+  }
+
+  if (sizeArg.value.literal.nodeType !== "int") {
+    throw new Error("Internal error: Mismatched literal type for malloc size. Expected int, got " + sizeArg.value.literal.nodeType);
+  }
+
+  const size = sizeArg.value.literal.int;
+
+  const freeList = getFreeList();
+
+  const sizeOfLargest = freeList.reduce((acc, block) => {
+    if (block.size > acc) {
+      return block.size;
+    }
+    return acc;
+  }, 0);
+
+  // We need two bytes for the block header
+  if (size > sizeOfLargest - 2 || size == 0) {
+    // Out of memory
+    return {
+      nodeType: "runtimeValue",
+      type: {
+        nodeType: "type",
+        type: "void*",
+      },
+      value: {
+        nodeType: "literal",
+        literal: {
+          nodeType: "char",
+          char: 0, // Null pointer
+        },
+      },
+    };
+  }
+
+  const writeAllocatedBlockHeader = (index: number) => {
+    state.heap[index] = size + 2;
+    state.heap[index + 1] = 0xAB; // Allocated block marker - AKA "magic value" according to OSTEP
+  }
+
+  const writeFreeBlockHeader = (index: number, size: number, next: number) => {
+    state.heap[index] = size;
+    state.heap[index + 1] = next;
+  }
+
+  const sizeWithHeader = size + 2;
+
+  if (state.memoryAllocationStrategy === FIRST_FIT) {
+    for (let i = 0; i < freeList.length; i++) {
+      const block = freeList[i];
+      console.log(block);
+      console.log(sizeWithHeader);
+
+      if (block.size >= sizeWithHeader) {
+        const next = block.next;
+
+        const newBlockStart = block.startIndex;
+        const newBlockEnd = block.startIndex + sizeWithHeader;
+
+        writeAllocatedBlockHeader(newBlockStart);
+
+        if (block.size > sizeWithHeader) {
+          writeFreeBlockHeader(newBlockEnd, block.size - sizeWithHeader, next);
+        }
+
+        if (i === 0) {
+          state.heap[1] = newBlockEnd;
+        } else {
+          const prev = freeList[i - 1].startIndex;
+          state.heap[prev + 1] = newBlockEnd;
+        }
+
+        return {
+          nodeType: "runtimeValue",
+          type: {
+            nodeType: "type",
+            type: "void*",
+          },
+          value: {
+            nodeType: "literal",
+            literal: {
+              nodeType: "char",
+              char: newBlockStart + 2, // Skip the block header
+            },
+          },
+        };
+      }
+    }
+  }
+
   return {
     nodeType: "runtimeValue",
     type: {

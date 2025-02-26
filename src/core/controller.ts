@@ -100,7 +100,10 @@ class Controller {
         let outputResult: string | undefined;
 
         if (result.nodeType === "void") {
-          outputResult = "void";
+          historyToAdd.push({
+            style: "info",
+            text: `-> void`,
+          });
         } else if (
           result.nodeType === "runtimeValue" &&
           result.value.nodeType === "literal"
@@ -114,12 +117,12 @@ class Controller {
           } else if (result.value.literal.nodeType === "double") {
             outputResult = result.value.literal.double.toString();
           }
-        }
 
-        historyToAdd.push({
-          style: "info",
-          text: `-> ${outputResult}`,
-        });
+          historyToAdd.push({
+            style: "info",
+            text: `-> ${outputResult}`,
+          });
+        }
       } catch (ex) {
         if (!(ex instanceof Error)) {
           throw ex;
