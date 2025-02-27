@@ -76,7 +76,11 @@ function CommandInput() {
               if (text === "") {
                 return;
               }
-              setInputHistory([...inputHistory, text]);
+
+              if (text !== inputHistory[inputHistory.length - 1]) {
+                setInputHistory([...inputHistory, text]);
+              }
+
               controller.executeStatement(text);
               setText("");
               setHistoryIdx(-1);
