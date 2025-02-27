@@ -183,16 +183,14 @@ const mallocImpl = (
         // If we just filled the first block in the free list, we need to
         // update the free list pointer, since the free list pointer should
         // always point to the first block in the free list
-        if (hasNext) {
+        if (newSplitFreeBlockIndex !== undefined) {
+          nextFreeListEntryPtr = newSplitFreeBlockIndex;
+        } else if (hasNext) {
           nextFreeListEntryPtr = freeList[i + 1].startIndex;
         } else {
-          if (newSplitFreeBlockIndex !== undefined) {
-            nextFreeListEntryPtr = newSplitFreeBlockIndex;
-          } else {
-            // If we just filled the last block in the free list, we need to
-            // update the free list pointer to 0
-            nextFreeListEntryPtr = 0;
-          }
+          // If we just filled the last block in the free list, we need to
+          // update the free list pointer to 0
+          nextFreeListEntryPtr = 0;
         }
 
         if (!hasPrevious) {
