@@ -1,5 +1,5 @@
 import state from "../../state/state";
-import { RuntimeValueNode, Scope } from "./engine";
+import { RuntimeValueNode } from "./engine";
 
 const FIRST_FIT = 0;
 const NEXT_FIT = 1;
@@ -61,10 +61,25 @@ const getFreeList = (): {
   return freeList;
 };
 
-const mallocImpl = (
-  scope: Scope,
-  args: RuntimeValueNode[]
-): RuntimeValueNode => {
+const writeToHeap = (index: number, value: number) => {
+  if (index >= state.heap.length || index < 0) {
+    return;
+  }
+
+  state.heap[index] = Math.max(0, Math.min(value, 255));
+};
+
+const writeAllocatedBlockHeader = (index: number, size: number) => {
+  writeToHeap(index, size);
+  writeToHeap(index + 1, 0xab); // Allocated block marker - AKA "magic value" according to OSTEP
+};
+
+const writeFreeBlockHeader = (index: number, size: number, next: number) => {
+  writeToHeap(index, size);
+  writeToHeap(index + 1, next);
+};
+
+const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
   const sizeArg = args[0];
 
   if (sizeArg.nodeType !== "runtimeValue") {
@@ -125,100 +140,157 @@ const mallocImpl = (
     };
   }
 
-  const writeToHeap = (index: number, value: number) => {
-    if (index >= state.heap.length || index < 0) {
-      return;
+  const sizeWithHeader = size + 2;
+
+  const allocateAt = (
+    i: number,
+    updateNextFitPointer: boolean = false
+  ): RuntimeValueNode => {
+    const hasPrevious = i > 0;
+    const hasNext = i + 1 < freeList.length;
+
+    const block = freeList[i];
+
+    const next = block.next;
+
+    const newBlockStart = block.startIndex;
+
+    let allocatedSize = size + 2;
+
+    if (block.size - allocatedSize < 3) {
+      // There's not enough space for a free block header plus at least one
+      // byte of free space, so we will hand out the entire block
+      allocatedSize = block.size;
     }
 
-    state.heap[index] = Math.max(0, Math.min(value, 255));
-  };
+    const newBlockEnd = block.startIndex + allocatedSize;
 
-  const writeAllocatedBlockHeader = (index: number, size: number) => {
-    writeToHeap(index, size);
-    writeToHeap(index + 1, 0xab); // Allocated block marker - AKA "magic value" according to OSTEP
-  };
+    writeAllocatedBlockHeader(newBlockStart, allocatedSize);
 
-  const writeFreeBlockHeader = (index: number, size: number, next: number) => {
-    writeToHeap(index, size);
-    writeToHeap(index + 1, next);
-  };
+    let newSplitFreeBlockIndex: number | undefined = undefined;
 
-  const sizeWithHeader = size + 2;
+    // If we have enough space left over to create a new free block, we
+    // need to split the block
+    if (block.size - allocatedSize >= 3) {
+      writeFreeBlockHeader(newBlockEnd, block.size - sizeWithHeader, next);
+      newSplitFreeBlockIndex = newBlockEnd;
+    }
+
+    let nextFreeListEntryPtr = -1;
+
+    // If we just filled the first block in the free list, we need to
+    // update the free list pointer, since the free list pointer should
+    // always point to the first block in the free list
+    if (newSplitFreeBlockIndex !== undefined) {
+      nextFreeListEntryPtr = newSplitFreeBlockIndex;
+    } else if (hasNext) {
+      nextFreeListEntryPtr = freeList[i + 1].startIndex;
+    } else {
+      // If we just filled the last block in the free list, we need to
+      // update the free list pointer to 0
+      nextFreeListEntryPtr = 0;
+    }
+
+    if (!hasPrevious) {
+      writeToHeap(1, nextFreeListEntryPtr);
+    } else {
+      // We need to update the previous block's next pointer
+      const prev = freeList[i - 1].startIndex;
+      writeToHeap(prev + 1, nextFreeListEntryPtr);
+    }
+
+    if (updateNextFitPointer) {
+      if (nextFreeListEntryPtr === 0) {
+        const freeList = getFreeList();
+        nextFreeListEntryPtr = freeList[0]?.startIndex ?? 0;
+      }
+
+      writeToHeap(2, nextFreeListEntryPtr);
+    }
+
+    return {
+      nodeType: "runtimeValue",
+      type: {
+        nodeType: "type",
+        type: "void*",
+      },
+      value: {
+        nodeType: "literal",
+        literal: {
+          nodeType: "char",
+          char: newBlockStart + 2, // Skip the block header
+        },
+      },
+    };
+  };
 
   if (state.memoryAllocationStrategy === FIRST_FIT) {
     for (let i = 0; i < freeList.length; i++) {
-      const hasPrevious = i > 0;
-      const hasNext = i + 1 < freeList.length;
-
       const block = freeList[i];
 
       if (block.size >= sizeWithHeader) {
-        const next = block.next;
+        return allocateAt(i);
+      }
+    }
+  } else if (state.memoryAllocationStrategy === BEST_FIT) {
+    let bestFitIndex = -1;
+    let bestFitSize = Number.MAX_SAFE_INTEGER;
 
-        const newBlockStart = block.startIndex;
+    for (let i = 0; i < freeList.length; i++) {
+      const block = freeList[i];
 
-        let allocatedSize = size + 2;
+      if (block.size >= sizeWithHeader && block.size < bestFitSize) {
+        bestFitIndex = i;
+        bestFitSize = block.size;
+      }
+    }
 
-        if (block.size - allocatedSize < 3) {
-          // There's not enough space for a free block header plus at least one
-          // byte of free space, so we will hand out the entire block
-          allocatedSize = block.size;
-        }
+    if (bestFitIndex !== -1) {
+      return allocateAt(bestFitIndex);
+    }
+  } else if (state.memoryAllocationStrategy === WORST_FIT) {
+    let worstFitIndex = -1;
+    let worstFitSize = 0;
 
-        const newBlockEnd = block.startIndex + allocatedSize;
+    for (let i = 0; i < freeList.length; i++) {
+      const block = freeList[i];
 
-        writeAllocatedBlockHeader(newBlockStart, allocatedSize);
+      if (block.size >= sizeWithHeader && block.size > worstFitSize) {
+        worstFitIndex = i;
+        worstFitSize = block.size;
+      }
+    }
 
-        let newSplitFreeBlockIndex: number | undefined = undefined;
+    if (worstFitIndex !== -1) {
+      return allocateAt(worstFitIndex);
+    }
+  } else if (state.memoryAllocationStrategy === NEXT_FIT) {
+    let nextFitPointer = state.heap[2]; // Next fit pointer
 
-        // If we have enough space left over to create a new free block, we
-        // need to split the block
-        if (block.size - allocatedSize >= 3) {
-          writeFreeBlockHeader(newBlockEnd, block.size - sizeWithHeader, next);
-          newSplitFreeBlockIndex = newBlockEnd;
-        }
+    for (let i = 0; i < freeList.length; i++) {
+      let blockIndex = -1;
 
-        let nextFreeListEntryPtr = -1;
+      const block = freeList.find((b, i) => {
+        blockIndex = i;
+        return b.startIndex === nextFitPointer;
+      });
 
-        // If we just filled the first block in the free list, we need to
-        // update the free list pointer, since the free list pointer should
-        // always point to the first block in the free list
-        if (newSplitFreeBlockIndex !== undefined) {
-          nextFreeListEntryPtr = newSplitFreeBlockIndex;
-        } else if (hasNext) {
-          nextFreeListEntryPtr = freeList[i + 1].startIndex;
-        } else {
-          // If we just filled the last block in the free list, we need to
-          // update the free list pointer to 0
-          nextFreeListEntryPtr = 0;
-        }
+      if (!block) {
+        break;
+      }
 
-        if (!hasPrevious) {
-          writeToHeap(1, nextFreeListEntryPtr);
-        } else {
-          // We need to update the previous block's next pointer
-          const prev = freeList[i - 1].startIndex;
-          writeToHeap(prev + 1, nextFreeListEntryPtr);
-        }
+      if (block.size >= sizeWithHeader) {
+        return allocateAt(blockIndex, true);
+      }
 
-        return {
-          nodeType: "runtimeValue",
-          type: {
-            nodeType: "type",
-            type: "void*",
-          },
-          value: {
-            nodeType: "literal",
-            literal: {
-              nodeType: "char",
-              char: newBlockStart + 2, // Skip the block header
-            },
-          },
-        };
+      nextFitPointer = block.next;
+      if (nextFitPointer === 0) {
+        nextFitPointer = freeList[0].startIndex;
       }
     }
   }
 
+  // If we get here, we didn't find a suitable block
   return {
     nodeType: "runtimeValue",
     type: {
@@ -228,8 +300,8 @@ const mallocImpl = (
     value: {
       nodeType: "literal",
       literal: {
-        nodeType: "string",
-        string: `${scope["test"]} ${args.length}`,
+        nodeType: "char",
+        char: 0, // Null pointer
       },
     },
   };

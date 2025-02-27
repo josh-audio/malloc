@@ -78,7 +78,6 @@ class Engine {
           }
 
           return mallocImpl(
-            engine.globalScope,
             args.filter((arg) => arg.nodeType === "runtimeValue")
           );
         },
