@@ -92,6 +92,7 @@ html {
   margin-bottom: 8px;
   margin-left: 32px;
   border-top: 1px solid #FFF3;
+  white-space: pre-wrap;
 }
 
 .command-history-item:nth-child(1) {

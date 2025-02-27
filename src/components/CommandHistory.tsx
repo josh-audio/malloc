@@ -8,8 +8,16 @@ function insertNewlines(text: string) {
   return text
     .replace(/ /g, " ")
     .split("\n")
-    .map(function (item, key) {
-      return <Fragment key={key}>{item}</Fragment>;
+    .map((item) => {
+      return [item, <br />];
+    })
+    .map((item, index) => {
+      return (
+        <Fragment key={index}>
+          {item[0]}
+          {item[1]}
+        </Fragment>
+      );
     });
 }
 
