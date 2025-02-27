@@ -4,6 +4,8 @@
 
 ### Features:
 
+- Malloc
+  - Added next-fit allocation strategy
 - UI
   - Memory addresses are now displayed as small labels above cells, and cells now contain memory values.
   - Added support for displaying memory addresses and values in hex. This can be changed with:
@@ -74,6 +76,8 @@
 
 ### Maintenance:
 
+- Malloc
+  - Reimplemented malloc() and free() to work on real memory addresses instead of hidden flags
 - Tooling
   - Ported to TypeScript / React 19 / Vite, with Zod for AST type safety
   - Refactored UI to use app-level state store with MobX

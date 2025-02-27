@@ -1,5 +1,6 @@
 import state from "../../state/state";
-import { RuntimeValueNode } from "./engine";
+import { coerce } from "./coerce";
+import { RuntimeValueNode, VoidNode } from "./engine";
 
 const FIRST_FIT = 0;
 const NEXT_FIT = 1;
@@ -307,8 +308,130 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
   };
 };
 
+const freeImpl = (args: RuntimeValueNode[]): VoidNode => {
+  const ptrArg = args[0];
+
+  if (ptrArg.nodeType !== "runtimeValue") {
+    throw new Error(
+      "Type error: Invalid type for free pointer. Expected runtimeValue, got " +
+        ptrArg.nodeType
+    );
+  }
+
+  const addressValue = coerce(ptrArg, {
+    nodeType: "type",
+    type: "void*",
+  });
+
+  if (addressValue.value.nodeType !== "literal") {
+    throw new Error("Internal error (free()): Bad output from coerce()");
+  }
+
+  if (addressValue.value.literal.nodeType !== "char") {
+    throw new Error("Internal error (free()): Bad output from coerce()");
+  }
+
+  // The address is the char value minus 2. The incoming pointer will be to the
+  // start of user-addressable memory, but we want a pointer to our header.
+  const address = addressValue.value.literal.char - 2;
+
+  if (state.heap[address + 1] !== 0xab) {
+    throw new Error(
+      `Runtime error: Invalid magic number. Expected 0xAB, found 0x${state.heap[
+        address + 1
+      ]
+        .toString(16)
+        .toUpperCase()
+        .padStart(2, "0")}.`
+    );
+  }
+
+  if (address < 3) {
+    throw new Error(
+      `Runtime error: Segmentation fault.`
+    );
+  }
+
+  const blockSize = state.heap[address];
+
+  if (blockSize < 3) {
+    throw new Error(
+      `Runtime error: Invalid block size. Expected >= 3, found ${blockSize}. Allocated block cannot be valid.`
+    );
+  }
+
+  const freeList = getFreeList();
+
+  if (freeList.length === 0) {
+    // If the free list is empty, we can just add the block to the free list
+    writeFreeBlockHeader(address, blockSize, 0);
+    writeToHeap(1, address);
+    return {
+      nodeType: "void",
+    };
+  }
+
+  let blockBefore: (typeof freeList)[number] | undefined = undefined;
+  let blockAfter: (typeof freeList)[number] | undefined = undefined;
+
+  for (let i = 0; i < freeList.length; i++) {
+    const block = freeList[i];
+
+    if (block.startIndex === address) {
+      throw new Error(
+        `Runtime error: Segmentation fault (double free).`
+      );
+    }
+
+    if (block.startIndex < address) {
+      blockBefore = block;
+    } else if (block.startIndex > address) {
+      blockAfter = block;
+      break;
+    }
+  }
+
+  let blockAddressAfterMerge = address;
+  let blockSizeAfterMerge = blockSize;
+
+  // If the block is adjacent to the block before it, we can merge them
+  if (blockBefore && blockBefore.startIndex + blockBefore.size === address) {
+    // Merge with the block before
+    const newSize = blockBefore.size + blockSize;
+    writeFreeBlockHeader(blockBefore.startIndex, newSize, address + blockSize);
+    blockAddressAfterMerge = blockBefore.startIndex;
+    blockSizeAfterMerge = newSize;
+  } else {
+    // Otherwise, we need to add it to the free list
+    writeFreeBlockHeader(address, blockSize, blockAfter?.startIndex ?? 0);
+
+    if (blockBefore) {
+      writeToHeap(blockBefore.startIndex + 1, address);
+    } else {
+      writeToHeap(1, address);
+    }
+  }
+
+  // If the block is adjacent to the block after it, we can merge them
+  if (blockAfter && address + blockSize === blockAfter.startIndex) {
+    // Merge with the block after
+    const newSize = blockSizeAfterMerge + blockAfter.size;
+    writeFreeBlockHeader(blockAddressAfterMerge, newSize, blockAfter.next);
+
+    if (state.heap[2] === blockAfter.startIndex) {
+      // If the next fit pointer is pointing to the block we just merged, we need to update it
+      writeToHeap(2, blockAddressAfterMerge);
+    }
+  }
+
+  return {
+    nodeType: "void",
+  };
+};
+
 export {
   mallocImpl,
+  freeImpl,
   initMemory,
   getFreeList,
   FIRST_FIT,

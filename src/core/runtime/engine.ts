@@ -9,6 +9,8 @@ import { coerce, coerceLiteralToChar, coerceLiteralToInt } from "./coerce";
 import {
   BEST_FIT,
   FIRST_FIT,
+  freeImpl,
+  getFreeList,
   initMemory,
   mallocImpl,
   NEXT_FIT,
@@ -78,6 +80,42 @@ class Engine {
           }
 
           return mallocImpl(
+            args.filter((arg) => arg.nodeType === "runtimeValue")
+          );
+        },
+      },
+    },
+
+    free: {
+      nodeType: "runtimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [
+          {
+            nodeType: "declaration",
+            declaration: {
+              nodeType: "singleDeclaration",
+              identifier: {
+                nodeType: "identifier",
+                identifier: "address",
+              },
+              type: {
+                nodeType: "type",
+                type: "void*",
+              },
+            },
+          },
+        ],
+        body: (args) => {
+          if (args.some((arg) => arg.nodeType === "type")) {
+            throw new Error(`Runtime error: Cannot call free with a type`);
+          }
+
+          return freeImpl(
             args.filter((arg) => arg.nodeType === "runtimeValue")
           );
         },
@@ -234,6 +272,37 @@ class Engine {
       },
     },
 
+    // __debug: {
+    //   nodeType: "runtimeValue",
+    //   type: {
+    //     nodeType: "type",
+    //     type: "nativeFunction",
+    //   },
+    //   value: {
+    //     nodeType: "nativeFunctionDefinition",
+    //     arguments: [],
+    //     body: () => {
+    //       console.log(state.heap);
+
+    //       state.heap = [
+    //         0, 3, 0, 21, 38, 0, 0, 0, 0, 0, 7, 171, 0, 0, 0, 0, 0, 7, 38, 0, 0,
+    //         0, 0, 0, 7, 171, 0, 0, 0, 0, 0, 7, 171, 0, 0, 0, 0, 0, 218, 0, 0, 0,
+    //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    //         0, 0, 0, 0, 0, 0, 0,
+    //       ];
+    //       return { nodeType: "void" };
+    //     },
+    //   },
+    // },
+
     FIRST_FIT: {
       nodeType: "runtimeValue",
       type: {
@@ -354,9 +423,12 @@ class Engine {
 
           // Set the next fit pointer to the beginning of the free list if needed
           if (strategy === NEXT_FIT) {
-            state.heap[2] = state.heap[1];
-          } else {
-            state.heap[2] = 0;
+            // If the next fit pointer is not in the free list, set it to the
+            // first block so it's not invalid.
+            const freeList = getFreeList();
+            if (!freeList.find((block) => block.startIndex === state.heap[2])) {
+              state.heap[2] = state.heap[1];
+            }
           }
 
           return { nodeType: "void" };
@@ -620,11 +692,14 @@ class Engine {
             );
           }
 
-          if (inputArg.type.type !== funcArg.declaration.type.type) {
-            throw new Error(
-              `Type error: ${statement.functionName.identifier}: Expected argument ${i} to be of type ${funcArg.declaration.type.type}, but got ${inputArg.type.type}.`
-            );
-          }
+          // Commenting this out. Functions must be in charge of type checking
+          // and maybe coercing their own arguments.
+
+          // if (inputArg.type.type !== funcArg.declaration.type.type) {
+          //   throw new Error(
+          //     `Type error: ${statement.functionName.identifier}: Expected argument ${i} to be of type ${funcArg.declaration.type.type}, but got ${inputArg.type.type}.`
+          //   );
+          // }
         }
 
         return func.body(args);
@@ -708,4 +783,4 @@ class Engine {
 const engine = new Engine();
 
 export default engine;
-export type { Scope, RuntimeValueNode };
+export type { Scope, RuntimeValueNode, VoidNode };
