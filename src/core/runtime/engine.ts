@@ -295,7 +295,7 @@ class Engine {
       },
     },
 
-    setMemoryAllocationStrategy: {
+    setStrategy: {
       nodeType: "runtimeValue",
       type: {
         nodeType: "type",
