@@ -96,7 +96,7 @@ const coerce = (value: RuntimeValueNode, type: TypeNode): RuntimeValueNode => {
     );
   }
 
-  if (type.type === "int" || type.type.includes("*")) {
+  if (type.type === "int") {
     return {
       nodeType: "runtimeValue",
       type: type,
@@ -108,7 +108,7 @@ const coerce = (value: RuntimeValueNode, type: TypeNode): RuntimeValueNode => {
       type: type,
       value: coerceLiteralToDouble(value.value),
     };
-  } else if (type.type === "char") {
+  } else if (type.type === "char" || type.type.includes("*")) {
     return {
       nodeType: "runtimeValue",
       type: type,
