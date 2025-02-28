@@ -139,7 +139,7 @@ parenthesis -> "(" statement ")" {%
   }
 %}
 
-type -> ("int" | "int" _ "*" | "double" | "string" | "char" | "char" _ "*" | "void" | "void" _ "*") {%
+type -> ( "double" | "string" | "int" | "int" _ "*" | "char" | "char" _ "*" | "size_t" | "size_t" _ "*" | "void" | "void" _ "*") {%
   function(data) {
     let type;
     if (data[0].length > 1) {
@@ -148,6 +148,13 @@ type -> ("int" | "int" _ "*" | "double" | "string" | "char" | "char" _ "*" | "vo
     else {
       type = data[0][0];
     }
+
+    if (type === 'size_t') {
+      type = 'char';
+    } else if (type === 'size_t*') {
+      type = 'char*';
+    }
+
     return {
       nodeType: 'type',
       type: type

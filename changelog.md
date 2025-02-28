@@ -21,6 +21,8 @@
     int a = 0xFF;
     ```
   - `char` is now a byte, instead of an odd sort-of-string type.
+  - Fixed the memory size to 256.
+  - Added `size_t` as an alias for `char`.
   - Significantly improved type soundness. For example, the previous interpreter would allow this:
     ```c
     int a = 2.3;

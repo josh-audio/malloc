@@ -250,28 +250,6 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type$subexpression$1$string$1",
-      symbols: [{ literal: "i" }, { literal: "n" }, { literal: "t" }],
-      postprocess: function joiner(d) {
-        return d.join("");
-      },
-    },
-    {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$1"],
-    },
-    {
-      name: "type$subexpression$1$string$2",
-      symbols: [{ literal: "i" }, { literal: "n" }, { literal: "t" }],
-      postprocess: function joiner(d) {
-        return d.join("");
-      },
-    },
-    {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$2", "_", { literal: "*" }],
-    },
-    {
-      name: "type$subexpression$1$string$3",
       symbols: [
         { literal: "d" },
         { literal: "o" },
@@ -286,10 +264,10 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$3"],
+      symbols: ["type$subexpression$1$string$1"],
     },
     {
-      name: "type$subexpression$1$string$4",
+      name: "type$subexpression$1$string$2",
       symbols: [
         { literal: "s" },
         { literal: "t" },
@@ -304,7 +282,29 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$4"],
+      symbols: ["type$subexpression$1$string$2"],
+    },
+    {
+      name: "type$subexpression$1$string$3",
+      symbols: [{ literal: "i" }, { literal: "n" }, { literal: "t" }],
+      postprocess: function joiner(d) {
+        return d.join("");
+      },
+    },
+    {
+      name: "type$subexpression$1",
+      symbols: ["type$subexpression$1$string$3"],
+    },
+    {
+      name: "type$subexpression$1$string$4",
+      symbols: [{ literal: "i" }, { literal: "n" }, { literal: "t" }],
+      postprocess: function joiner(d) {
+        return d.join("");
+      },
+    },
+    {
+      name: "type$subexpression$1",
+      symbols: ["type$subexpression$1$string$4", "_", { literal: "*" }],
     },
     {
       name: "type$subexpression$1$string$5",
@@ -341,10 +341,12 @@ const grammar: nearley.CompiledRules = {
     {
       name: "type$subexpression$1$string$7",
       symbols: [
-        { literal: "v" },
-        { literal: "o" },
+        { literal: "s" },
         { literal: "i" },
-        { literal: "d" },
+        { literal: "z" },
+        { literal: "e" },
+        { literal: "_" },
+        { literal: "t" },
       ],
       postprocess: function joiner(d) {
         return d.join("");
@@ -357,6 +359,24 @@ const grammar: nearley.CompiledRules = {
     {
       name: "type$subexpression$1$string$8",
       symbols: [
+        { literal: "s" },
+        { literal: "i" },
+        { literal: "z" },
+        { literal: "e" },
+        { literal: "_" },
+        { literal: "t" },
+      ],
+      postprocess: function joiner(d) {
+        return d.join("");
+      },
+    },
+    {
+      name: "type$subexpression$1",
+      symbols: ["type$subexpression$1$string$8", "_", { literal: "*" }],
+    },
+    {
+      name: "type$subexpression$1$string$9",
+      symbols: [
         { literal: "v" },
         { literal: "o" },
         { literal: "i" },
@@ -368,7 +388,23 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$8", "_", { literal: "*" }],
+      symbols: ["type$subexpression$1$string$9"],
+    },
+    {
+      name: "type$subexpression$1$string$10",
+      symbols: [
+        { literal: "v" },
+        { literal: "o" },
+        { literal: "i" },
+        { literal: "d" },
+      ],
+      postprocess: function joiner(d) {
+        return d.join("");
+      },
+    },
+    {
+      name: "type$subexpression$1",
+      symbols: ["type$subexpression$1$string$10", "_", { literal: "*" }],
     },
     {
       name: "type",
@@ -380,6 +416,13 @@ const grammar: nearley.CompiledRules = {
         } else {
           type = data[0][0];
         }
+
+        if (type === "size_t") {
+          type = "char";
+        } else if (type === "size_t*") {
+          type = "char*";
+        }
+
         return {
           nodeType: "type",
           type: type,
