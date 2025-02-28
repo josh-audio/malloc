@@ -70,7 +70,7 @@ class Engine {
               },
               type: {
                 nodeType: "type",
-                type: "int",
+                type: "uint32_t",
                 isPointer: false,
               },
             },
@@ -163,7 +163,7 @@ class Engine {
               },
               type: {
                 nodeType: "type",
-                type: "int",
+                type: "uint32_t",
                 isPointer: false,
               },
             },
@@ -182,13 +182,13 @@ class Engine {
             );
           }
 
-          if (args[0].value.literal.nodeType !== "int") {
+          if (args[0].value.literal.nodeType !== "uint32_t") {
             throw new Error(
               `Internal error: Expected argument 0 to be of type int, but got ${args[0].value.literal.nodeType}.`
             );
           }
 
-          const base = args[0].value.literal.int;
+          const base = args[0].value.literal.value;
 
           if (base !== 10 && base !== 16) {
             throw new Error(
@@ -246,18 +246,18 @@ class Engine {
 
           let size = 1;
 
-          if (args[0].type === "int") {
+          if (args[0].type === "uint32_t") {
             size = 4;
           }
 
           const returnValue: RuntimeValueNode = {
             nodeType: "runtimeValue",
-            type: { nodeType: "type", type: "int", isPointer: false },
+            type: { nodeType: "type", type: "uint32_t", isPointer: false },
             value: {
               nodeType: "literal",
               literal: {
-                nodeType: "int",
-                int: size,
+                nodeType: "uint32_t",
+                value: size,
               },
             },
           };
@@ -319,14 +319,14 @@ class Engine {
       nodeType: "runtimeValue",
       type: {
         nodeType: "type",
-        type: "int",
+        type: "uint32_t",
         isPointer: false,
       },
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "int",
-          int: FIRST_FIT,
+          nodeType: "uint32_t",
+          value: FIRST_FIT,
         },
       },
     },
@@ -335,14 +335,14 @@ class Engine {
       nodeType: "runtimeValue",
       type: {
         nodeType: "type",
-        type: "int",
+        type: "uint32_t",
         isPointer: false,
       },
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "int",
-          int: NEXT_FIT,
+          nodeType: "uint32_t",
+          value: NEXT_FIT,
         },
       },
     },
@@ -351,14 +351,14 @@ class Engine {
       nodeType: "runtimeValue",
       type: {
         nodeType: "type",
-        type: "int",
+        type: "uint32_t",
         isPointer: false,
       },
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "int",
-          int: BEST_FIT,
+          nodeType: "uint32_t",
+          value: BEST_FIT,
         },
       },
     },
@@ -367,14 +367,14 @@ class Engine {
       nodeType: "runtimeValue",
       type: {
         nodeType: "type",
-        type: "int",
+        type: "uint32_t",
         isPointer: false,
       },
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "int",
-          int: WORST_FIT,
+          nodeType: "uint32_t",
+          value: WORST_FIT,
         },
       },
     },
@@ -399,7 +399,7 @@ class Engine {
               },
               type: {
                 nodeType: "type",
-                type: "int",
+                type: "uint32_t",
                 isPointer: false,
               },
             },
@@ -418,13 +418,13 @@ class Engine {
             );
           }
 
-          if (args[0].value.literal.nodeType !== "int") {
+          if (args[0].value.literal.nodeType !== "uint32_t") {
             throw new Error(
               `Internal error: Expected argument 0 to be of type int, but got ${args[0].value.literal.nodeType}.`
             );
           }
 
-          const strategy = args[0].value.literal.int;
+          const strategy = args[0].value.literal.value;
 
           if (
             strategy !== FIRST_FIT &&
@@ -546,7 +546,7 @@ class Engine {
             nodeType: "literal",
             literal: {
               nodeType: "string",
-              string: "",
+              value: "",
             },
           },
         };
@@ -558,8 +558,8 @@ class Engine {
             value: {
               nodeType: "literal",
               literal: {
-                nodeType: "int",
-                int: 0,
+                nodeType: "uint32_t",
+                value: 0,
               },
             },
           },
@@ -613,20 +613,20 @@ class Engine {
       if (address !== undefined) {
         const coerced = coerce(value, {
           nodeType: "type",
-          type: "int",
+          type: "uint32_t",
           isPointer: false,
         });
         if (coerced.value.nodeType !== "literal") {
           throw new Error(
             `Internal error: Expected coerced value to be of type "literal", but got ${coerced.value.nodeType}.`
           );
-        } else if (coerced.value.literal.nodeType !== "int") {
+        } else if (coerced.value.literal.nodeType !== "uint32_t") {
           throw new Error(
-            `Internal error: Expected coerced value to be of type "int", but got ${coerced.type.type}.`
+            `Internal error: Expected coerced value to be of type "uint32_t", but got ${coerced.type.type}.`
           );
         }
 
-        const heapValueRaw = coerced.value.literal.int;
+        const heapValueRaw = coerced.value.literal.value;
 
         if (heapValueRaw < 0) {
           const value = Math.abs(heapValueRaw) % 256;
@@ -752,19 +752,19 @@ class Engine {
 
       const value: LiteralNode = {
         nodeType: "literal",
-        literal: { nodeType: "int", int: state.heap[address] },
+        literal: { nodeType: "uint32_t", value: state.heap[address] },
       };
 
-      if (runtimeValue.type.type === "int") {
+      if (runtimeValue.type.type === "uint32_t") {
         return {
           nodeType: "runtimeValue",
-          type: { nodeType: "type", type: "int", isPointer: false },
+          type: { nodeType: "type", type: "uint32_t", isPointer: false },
           value: value,
         };
-      } else if (runtimeValue.type.type === "char") {
+      } else if (runtimeValue.type.type === "uint8_t") {
         return {
           nodeType: "runtimeValue",
-          type: { nodeType: "type", type: "char", isPointer: false },
+          type: { nodeType: "type", type: "uint8_t", isPointer: false },
           value: coerceLiteralToChar(value),
         };
       } else {
@@ -799,13 +799,13 @@ class Engine {
     }
 
     const coercedValue = coerceLiteralToInt(value.value).literal;
-    if (coercedValue.nodeType !== "int") {
+    if (coercedValue.nodeType !== "uint32_t") {
       throw new Error(
-        `Internal error: Expected coerced value to be of type "int", but got ${coercedValue.nodeType}.`
+        `Internal error: Expected coerced value to be of type "uint32_t", but got ${coercedValue.nodeType}.`
       );
     }
 
-    const address = coercedValue.int;
+    const address = coercedValue.value;
 
     return address;
   }

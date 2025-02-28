@@ -108,14 +108,14 @@ class Controller {
           result.nodeType === "runtimeValue" &&
           result.value.nodeType === "literal"
         ) {
-          if (result.value.literal.nodeType === "char") {
-            outputResult = result.value.literal.char.toString();
+          if (result.value.literal.nodeType === "uint8_t") {
+            outputResult = result.value.literal.value.toString();
           } else if (result.value.literal.nodeType === "string") {
-            outputResult = `"${result.value.literal.string}"`;
-          } else if (result.value.literal.nodeType === "int") {
-            outputResult = result.value.literal.int.toString();
+            outputResult = `"${result.value.literal.value}"`;
+          } else if (result.value.literal.nodeType === "uint32_t") {
+            outputResult = result.value.literal.value.toString();
           } else if (result.value.literal.nodeType === "double") {
-            outputResult = result.value.literal.double.toString();
+            outputResult = result.value.literal.value.toString();
           }
 
           historyToAdd.push({
@@ -367,7 +367,7 @@ class Controller {
 
         return i;
       }
-      
+
       lastWasSingle = false;
       i++;
       return i;

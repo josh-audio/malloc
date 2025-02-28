@@ -90,7 +90,7 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
     );
   }
 
-  if (sizeArg.type.type !== "int") {
+  if (sizeArg.type.type !== "uint32_t") {
     throw new Error(
       "Type error: Invalid type for malloc size. Expected int, got " +
         sizeArg.type.type
@@ -104,14 +104,14 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
     );
   }
 
-  if (sizeArg.value.literal.nodeType !== "int") {
+  if (sizeArg.value.literal.nodeType !== "uint32_t") {
     throw new Error(
       "Internal error: Mismatched literal type for malloc size. Expected int, got " +
         sizeArg.value.literal.nodeType
     );
   }
 
-  const size = sizeArg.value.literal.int;
+  const size = sizeArg.value.literal.value;
 
   const freeList = getFreeList();
 
@@ -135,8 +135,8 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "char",
-          char: 0, // Null pointer
+          nodeType: "uint8_t",
+          value: 0, // Null pointer
         },
       },
     };
@@ -220,8 +220,8 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "char",
-          char: newBlockStart + 2, // Skip the block header
+          nodeType: "uint8_t",
+          value: newBlockStart + 2, // Skip the block header
         },
       },
     };
@@ -304,8 +304,8 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
     value: {
       nodeType: "literal",
       literal: {
-        nodeType: "char",
-        char: 0, // Null pointer
+        nodeType: "uint8_t",
+        value: 0, // Null pointer
       },
     },
   };
@@ -331,13 +331,13 @@ const freeImpl = (args: RuntimeValueNode[]): VoidNode => {
     throw new Error("Internal error (free()): Bad output from coerce()");
   }
 
-  if (addressValue.value.literal.nodeType !== "char") {
+  if (addressValue.value.literal.nodeType !== "uint8_t") {
     throw new Error("Internal error (free()): Bad output from coerce()");
   }
 
   // The address is the char value minus 2. The incoming pointer will be to the
   // start of user-addressable memory, but we want a pointer to our header.
-  const address = addressValue.value.literal.char - 2;
+  const address = addressValue.value.literal.value - 2;
 
   if (state.heap[address + 1] !== 0xab) {
     throw new Error(
@@ -351,9 +351,7 @@ const freeImpl = (args: RuntimeValueNode[]): VoidNode => {
   }
 
   if (address < 3) {
-    throw new Error(
-      `Runtime error: Segmentation fault.`
-    );
+    throw new Error(`Runtime error: Segmentation fault.`);
   }
 
   const blockSize = state.heap[address];
@@ -382,9 +380,7 @@ const freeImpl = (args: RuntimeValueNode[]): VoidNode => {
     const block = freeList[i];
 
     if (block.startIndex === address) {
-      throw new Error(
-        `Runtime error: Segmentation fault (double free).`
-      );
+      throw new Error(`Runtime error: Segmentation fault (double free).`);
     }
 
     if (block.startIndex < address) {

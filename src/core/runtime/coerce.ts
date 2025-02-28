@@ -2,22 +2,22 @@ import { LiteralNode, TypeNode } from "../grammar_output_validator";
 import { RuntimeValueNode } from "./engine";
 
 const coerceLiteralToInt = (value: LiteralNode): LiteralNode => {
-  if (value.literal.nodeType === "int") {
+  if (value.literal.nodeType === "uint32_t") {
     return value;
   } else if (value.literal.nodeType === "double") {
     return {
       nodeType: "literal",
       literal: {
-        nodeType: "int",
-        int: Math.floor(value.literal.double),
+        nodeType: "uint32_t",
+        value: Math.floor(value.literal.value),
       },
     };
-  } else if (value.literal.nodeType === "char") {
+  } else if (value.literal.nodeType === "uint8_t") {
     return {
       nodeType: "literal",
       literal: {
-        nodeType: "int",
-        int: value.literal.char,
+        nodeType: "uint32_t",
+        value: value.literal.value,
       },
     };
   } else {
@@ -30,12 +30,12 @@ const coerceLiteralToInt = (value: LiteralNode): LiteralNode => {
 const coerceLiteralToDouble = (value: LiteralNode): LiteralNode => {
   if (value.literal.nodeType === "double") {
     return value;
-  } else if (value.literal.nodeType === "int") {
+  } else if (value.literal.nodeType === "uint32_t") {
     return {
       nodeType: "literal",
       literal: {
         nodeType: "double",
-        double: value.literal.int,
+        value: value.literal.value,
       },
     };
   } else {
@@ -46,22 +46,22 @@ const coerceLiteralToDouble = (value: LiteralNode): LiteralNode => {
 };
 
 const coerceLiteralToChar = (value: LiteralNode): LiteralNode => {
-  if (value.literal.nodeType === "char") {
+  if (value.literal.nodeType === "uint8_t") {
     return value;
   } else if (value.literal.nodeType === "string") {
     return {
       nodeType: "literal",
       literal: {
-        nodeType: "char",
-        char: value.literal.string.charCodeAt(0),
+        nodeType: "uint8_t",
+        value: value.literal.value.charCodeAt(0),
       },
     };
-  } else if (value.literal.nodeType === "int") {
+  } else if (value.literal.nodeType === "uint32_t") {
     return {
       nodeType: "literal",
       literal: {
-        nodeType: "char",
-        char: value.literal.int & 0xff,
+        nodeType: "uint8_t",
+        value: value.literal.value & 0xff,
       },
     };
   } else {
@@ -74,12 +74,12 @@ const coerceLiteralToChar = (value: LiteralNode): LiteralNode => {
 const coerceLiteralToString = (value: LiteralNode): LiteralNode => {
   if (value.literal.nodeType === "string") {
     return value;
-  } else if (value.literal.nodeType === "char") {
+  } else if (value.literal.nodeType === "uint8_t") {
     return {
       nodeType: "literal",
       literal: {
         nodeType: "string",
-        string: String.fromCharCode(value.literal.char),
+        value: String.fromCharCode(value.literal.value),
       },
     };
   } else {
@@ -96,7 +96,7 @@ const coerce = (value: RuntimeValueNode, type: TypeNode): RuntimeValueNode => {
     );
   }
 
-  if (type.type === "int") {
+  if (type.type === "uint32_t") {
     return {
       nodeType: "runtimeValue",
       type: type,
@@ -108,7 +108,7 @@ const coerce = (value: RuntimeValueNode, type: TypeNode): RuntimeValueNode => {
       type: type,
       value: coerceLiteralToDouble(value.value),
     };
-  } else if (type.type === "char" || type.isPointer) {
+  } else if (type.type === "uint8_t" || type.isPointer) {
     return {
       nodeType: "runtimeValue",
       type: type,

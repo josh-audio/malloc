@@ -154,20 +154,21 @@ type_pointer -> ( type_raw _ "*" ) {%
   }
 %}
 
-type_raw -> ( "double" | "string" | "int" | "char" | "size_t" | "void" ) {%
+type_raw -> (
+  "double"
+  | "string" 
+  | "uint32_t" | "int"
+  | "uint8_t" | "size_t" | "char"
+  | "void"
+) {%
   function(data) {
     let type;
-    if (data[0].length > 1) {
-      type = data[0][0] + data[0][2];
-    }
-    else {
-      type = data[0][0];
-    }
+    type = data[0][0];
 
-    if (type === 'size_t') {
-      type = 'char';
-    } else if (type === 'size_t*') {
-      type = 'char*';
+    if (type === 'size_t' || type === 'char') {
+      type = 'uint8_t';
+    } else if (type === 'int') {
+      type = 'uint32_t';
     }
 
     return {
@@ -196,8 +197,8 @@ int -> (intDecimal | intHex) {%
 intDecimal -> [0-9]:+ {%
   function(data) {
     return {
-      nodeType: 'int',
-      int: parseInt(data[0].join().replace(/,/g, ''))
+      nodeType: 'uint32_t',
+      value: parseInt(data[0].join().replace(/,/g, ''))
     }
   }
 %}
@@ -205,8 +206,8 @@ intDecimal -> [0-9]:+ {%
 intHex -> "0x" [0-9a-fA-F]:+ {%
   function(data) {
     return {
-      nodeType: 'int',
-      int: parseInt(data[1].join().replace(/,/g, ''), 16)
+      nodeType: 'uint32_t',
+      value: parseInt(data[1].join().replace(/,/g, ''), 16)
     }
   }
 %}
@@ -215,7 +216,7 @@ double -> [0-9]:+ "." [0-9]:* {%
   function(data) {
     return {
       nodeType: 'double',
-      double: parseFloat(data[0].join().replace(/,/g, '') + '.' + data[2].join().replace(/,/g, ''))
+      value: parseFloat(data[0].join().replace(/,/g, '') + '.' + data[2].join().replace(/,/g, ''))
     }
   }
 %}
@@ -224,7 +225,7 @@ string -> "\"" [^"]:* "\"" {%
   function(data) {
     return {
       nodeType: 'string',
-      string: data[1].join().replace(/,/g, '')
+      value: data[1].join().replace(/,/g, '')
     }
   }
 %}
@@ -232,8 +233,8 @@ string -> "\"" [^"]:* "\"" {%
 char -> "'" [^'] "'" {%
   function(data) {
     return {
-      nodeType: 'char',
-      char: data[1].charCodeAt(0)
+      nodeType: 'uint8_t',
+      value: data[1].charCodeAt(0)
     }
   }
 %}

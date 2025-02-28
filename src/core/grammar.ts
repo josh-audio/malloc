@@ -309,7 +309,16 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type_raw$subexpression$1$string$3",
-      symbols: [{ literal: "i" }, { literal: "n" }, { literal: "t" }],
+      symbols: [
+        { literal: "u" },
+        { literal: "i" },
+        { literal: "n" },
+        { literal: "t" },
+        { literal: "3" },
+        { literal: "2" },
+        { literal: "_" },
+        { literal: "t" },
+      ],
       postprocess: function joiner(d) {
         return d.join("");
       },
@@ -320,12 +329,7 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type_raw$subexpression$1$string$4",
-      symbols: [
-        { literal: "c" },
-        { literal: "h" },
-        { literal: "a" },
-        { literal: "r" },
-      ],
+      symbols: [{ literal: "i" }, { literal: "n" }, { literal: "t" }],
       postprocess: function joiner(d) {
         return d.join("");
       },
@@ -337,10 +341,11 @@ const grammar: nearley.CompiledRules = {
     {
       name: "type_raw$subexpression$1$string$5",
       symbols: [
-        { literal: "s" },
+        { literal: "u" },
         { literal: "i" },
-        { literal: "z" },
-        { literal: "e" },
+        { literal: "n" },
+        { literal: "t" },
+        { literal: "8" },
         { literal: "_" },
         { literal: "t" },
       ],
@@ -355,6 +360,40 @@ const grammar: nearley.CompiledRules = {
     {
       name: "type_raw$subexpression$1$string$6",
       symbols: [
+        { literal: "s" },
+        { literal: "i" },
+        { literal: "z" },
+        { literal: "e" },
+        { literal: "_" },
+        { literal: "t" },
+      ],
+      postprocess: function joiner(d) {
+        return d.join("");
+      },
+    },
+    {
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$6"],
+    },
+    {
+      name: "type_raw$subexpression$1$string$7",
+      symbols: [
+        { literal: "c" },
+        { literal: "h" },
+        { literal: "a" },
+        { literal: "r" },
+      ],
+      postprocess: function joiner(d) {
+        return d.join("");
+      },
+    },
+    {
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$7"],
+    },
+    {
+      name: "type_raw$subexpression$1$string$8",
+      symbols: [
         { literal: "v" },
         { literal: "o" },
         { literal: "i" },
@@ -366,23 +405,19 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type_raw$subexpression$1",
-      symbols: ["type_raw$subexpression$1$string$6"],
+      symbols: ["type_raw$subexpression$1$string$8"],
     },
     {
       name: "type_raw",
       symbols: ["type_raw$subexpression$1"],
       postprocess: function (data) {
         let type;
-        if (data[0].length > 1) {
-          type = data[0][0] + data[0][2];
-        } else {
-          type = data[0][0];
-        }
+        type = data[0][0];
 
-        if (type === "size_t") {
-          type = "char";
-        } else if (type === "size_t*") {
-          type = "char*";
+        if (type === "size_t" || type === "char") {
+          type = "uint8_t";
+        } else if (type === "int") {
+          type = "uint32_t";
         }
 
         return {
@@ -428,8 +463,8 @@ const grammar: nearley.CompiledRules = {
       symbols: ["intDecimal$ebnf$1"],
       postprocess: function (data) {
         return {
-          nodeType: "int",
-          int: parseInt(data[0].join().replace(/,/g, "")),
+          nodeType: "uint32_t",
+          value: parseInt(data[0].join().replace(/,/g, "")),
         };
       },
     },
@@ -453,8 +488,8 @@ const grammar: nearley.CompiledRules = {
       symbols: ["intHex$string$1", "intHex$ebnf$1"],
       postprocess: function (data) {
         return {
-          nodeType: "int",
-          int: parseInt(data[1].join().replace(/,/g, ""), 16),
+          nodeType: "uint32_t",
+          value: parseInt(data[1].join().replace(/,/g, ""), 16),
         };
       },
     },
@@ -480,7 +515,7 @@ const grammar: nearley.CompiledRules = {
       postprocess: function (data) {
         return {
           nodeType: "double",
-          double: parseFloat(
+          value: parseFloat(
             data[0].join().replace(/,/g, "") +
               "." +
               data[2].join().replace(/,/g, "")
@@ -502,7 +537,7 @@ const grammar: nearley.CompiledRules = {
       postprocess: function (data) {
         return {
           nodeType: "string",
-          string: data[1].join().replace(/,/g, ""),
+          value: data[1].join().replace(/,/g, ""),
         };
       },
     },
@@ -511,8 +546,8 @@ const grammar: nearley.CompiledRules = {
       symbols: [{ literal: "'" }, /[^']/, { literal: "'" }],
       postprocess: function (data) {
         return {
-          nodeType: "char",
-          char: data[1].charCodeAt(0),
+          nodeType: "uint8_t",
+          value: data[1].charCodeAt(0),
         };
       },
     },

@@ -9,19 +9,22 @@ import {
 // Operator +         //
 ////////////////////////
 
-const intOperatorPlus = (
+const uint32_tOperatorPlus = (
   left: LiteralNode,
   right: LiteralNode
 ): LiteralNode => {
-  if (left.literal.nodeType !== "int" || right.literal.nodeType !== "int") {
+  if (
+    left.literal.nodeType !== "uint32_t" ||
+    right.literal.nodeType !== "uint32_t"
+  ) {
     throw Error("Internal error: Unexpected literal node type.");
   }
 
   return {
     nodeType: "literal",
     literal: {
-      nodeType: "int",
-      int: left.literal.int + right.literal.int,
+      nodeType: "uint32_t",
+      value: left.literal.value + right.literal.value,
     },
   };
 };
@@ -41,24 +44,27 @@ const doubleOperatorPlus = (
     nodeType: "literal",
     literal: {
       nodeType: "double",
-      double: left.literal.double + right.literal.double,
+      value: left.literal.value + right.literal.value,
     },
   };
 };
 
-const charOperatorPlus = (
+const uint8_tOperatorPlus = (
   left: LiteralNode,
   right: LiteralNode
 ): LiteralNode => {
-  if (left.literal.nodeType !== "char" || right.literal.nodeType !== "char") {
+  if (
+    left.literal.nodeType !== "uint8_t" ||
+    right.literal.nodeType !== "uint8_t"
+  ) {
     throw Error("Internal error: Unexpected literal node type.");
   }
 
   return {
     nodeType: "literal",
     literal: {
-      nodeType: "char",
-      char: (left.literal.char + right.literal.char) & 0xff,
+      nodeType: "uint8_t",
+      value: (left.literal.value + right.literal.value) & 0xff,
     },
   };
 };
@@ -78,7 +84,7 @@ const stringOperatorPlus = (
     nodeType: "literal",
     literal: {
       nodeType: "string",
-      string: left.literal.string + right.literal.string,
+      value: left.literal.value + right.literal.value,
     },
   };
 };
@@ -88,15 +94,17 @@ const coerceOperatorPlus = (
   right: LiteralNode
 ): LiteralNode => {
   const leftIsNumeric =
-    left.literal.nodeType === "int" || left.literal.nodeType === "double";
+    left.literal.nodeType === "uint32_t" || left.literal.nodeType === "double";
   const rightIsNumeric =
-    right.literal.nodeType === "int" || right.literal.nodeType === "double";
+    right.literal.nodeType === "uint32_t" ||
+    right.literal.nodeType === "double";
   const bothInt =
-    left.literal.nodeType === "int" && right.literal.nodeType === "int";
+    left.literal.nodeType === "uint32_t" &&
+    right.literal.nodeType === "uint32_t";
 
   if (leftIsNumeric && rightIsNumeric) {
     if (bothInt) {
-      return intOperatorPlus(left, right);
+      return uint32_tOperatorPlus(left, right);
     } else {
       return doubleOperatorPlus(
         coerceLiteralToDouble(left),
@@ -105,18 +113,21 @@ const coerceOperatorPlus = (
     }
   }
 
-  const leftIsChar = left.literal.nodeType === "char";
-  const rightIsChar = right.literal.nodeType === "char";
+  const leftIsChar = left.literal.nodeType === "uint8_t";
+  const rightIsChar = right.literal.nodeType === "uint8_t";
   const bothChar = leftIsChar && rightIsChar;
   const bothIntOrChar =
-    (leftIsChar || left.literal.nodeType === "int") &&
-    (rightIsChar || right.literal.nodeType === "int");
+    (leftIsChar || left.literal.nodeType === "uint32_t") &&
+    (rightIsChar || right.literal.nodeType === "uint32_t");
   if (bothIntOrChar) {
     if (bothChar) {
-      return charOperatorPlus(left, right);
+      return uint8_tOperatorPlus(left, right);
     }
 
-    return intOperatorPlus(coerceLiteralToInt(left), coerceLiteralToInt(right));
+    return uint32_tOperatorPlus(
+      coerceLiteralToInt(left),
+      coerceLiteralToInt(right)
+    );
   }
 
   const leftIsString = left.literal.nodeType === "string";
@@ -139,19 +150,22 @@ const coerceOperatorPlus = (
 // Operator -         //
 ////////////////////////
 
-const intOperatorMinus = (
+const uint32_tOperatorMinus = (
   left: LiteralNode,
   right: LiteralNode
 ): LiteralNode => {
-  if (left.literal.nodeType !== "int" || right.literal.nodeType !== "int") {
+  if (
+    left.literal.nodeType !== "uint32_t" ||
+    right.literal.nodeType !== "uint32_t"
+  ) {
     throw Error("Internal error: Unexpected literal node type.");
   }
 
   return {
     nodeType: "literal",
     literal: {
-      nodeType: "int",
-      int: left.literal.int - right.literal.int,
+      nodeType: "uint32_t",
+      value: left.literal.value - right.literal.value,
     },
   };
 };
@@ -171,24 +185,27 @@ const doubleOperatorMinus = (
     nodeType: "literal",
     literal: {
       nodeType: "double",
-      double: left.literal.double - right.literal.double,
+      value: left.literal.value - right.literal.value,
     },
   };
 };
 
-const charOperatorMinus = (
+const uint8_tOperatorMinus = (
   left: LiteralNode,
   right: LiteralNode
 ): LiteralNode => {
-  if (left.literal.nodeType !== "char" || right.literal.nodeType !== "char") {
+  if (
+    left.literal.nodeType !== "uint8_t" ||
+    right.literal.nodeType !== "uint8_t"
+  ) {
     throw Error("Internal error: Unexpected literal node type.");
   }
 
   return {
     nodeType: "literal",
     literal: {
-      nodeType: "char",
-      char: (left.literal.char - right.literal.char) & 0xff,
+      nodeType: "uint8_t",
+      value: (left.literal.value - right.literal.value) & 0xff,
     },
   };
 };
@@ -198,15 +215,17 @@ const coerceOperatorMinus = (
   right: LiteralNode
 ): LiteralNode => {
   const leftIsNumeric =
-    left.literal.nodeType === "int" || left.literal.nodeType === "double";
+    left.literal.nodeType === "uint32_t" || left.literal.nodeType === "double";
   const rightIsNumeric =
-    right.literal.nodeType === "int" || right.literal.nodeType === "double";
+    right.literal.nodeType === "uint32_t" ||
+    right.literal.nodeType === "double";
   const bothInt =
-    left.literal.nodeType === "int" && right.literal.nodeType === "int";
+    left.literal.nodeType === "uint32_t" &&
+    right.literal.nodeType === "uint32_t";
 
   if (leftIsNumeric && rightIsNumeric) {
     if (bothInt) {
-      return intOperatorMinus(left, right);
+      return uint32_tOperatorMinus(left, right);
     }
     return doubleOperatorMinus(
       coerceLiteralToDouble(left),
@@ -214,17 +233,17 @@ const coerceOperatorMinus = (
     );
   }
 
-  const leftIsChar = left.literal.nodeType === "char";
-  const rightIsChar = right.literal.nodeType === "char";
+  const leftIsChar = left.literal.nodeType === "uint8_t";
+  const rightIsChar = right.literal.nodeType === "uint8_t";
   const bothChar = leftIsChar && rightIsChar;
   const bothIntOrChar =
-    (leftIsChar || left.literal.nodeType === "int") &&
-    (rightIsChar || right.literal.nodeType === "int");
+    (leftIsChar || left.literal.nodeType === "uint32_t") &&
+    (rightIsChar || right.literal.nodeType === "uint32_t");
   if (bothIntOrChar) {
     if (bothChar) {
-      return charOperatorMinus(left, right);
+      return uint8_tOperatorMinus(left, right);
     }
-    return intOperatorMinus(
+    return uint32_tOperatorMinus(
       coerceLiteralToInt(left),
       coerceLiteralToInt(right)
     );
@@ -246,19 +265,22 @@ const coerceOperatorMinus = (
 // Operator *         //
 ////////////////////////
 
-const intOperatorMultiply = (
+const uint32_tOperatorMultiply = (
   left: LiteralNode,
   right: LiteralNode
 ): LiteralNode => {
-  if (left.literal.nodeType !== "int" || right.literal.nodeType !== "int") {
+  if (
+    left.literal.nodeType !== "uint32_t" ||
+    right.literal.nodeType !== "uint32_t"
+  ) {
     throw Error("Internal error: Unexpected literal node type.");
   }
 
   return {
     nodeType: "literal",
     literal: {
-      nodeType: "int",
-      int: left.literal.int * right.literal.int,
+      nodeType: "uint32_t",
+      value: left.literal.value * right.literal.value,
     },
   };
 };
@@ -278,24 +300,27 @@ const doubleOperatorMultiply = (
     nodeType: "literal",
     literal: {
       nodeType: "double",
-      double: left.literal.double * right.literal.double,
+      value: left.literal.value * right.literal.value,
     },
   };
 };
 
-const charOperatorMultiply = (
+const uint8_tOperatorMultiply = (
   left: LiteralNode,
   right: LiteralNode
 ): LiteralNode => {
-  if (left.literal.nodeType !== "char" || right.literal.nodeType !== "char") {
+  if (
+    left.literal.nodeType !== "uint8_t" ||
+    right.literal.nodeType !== "uint8_t"
+  ) {
     throw Error("Internal error: Unexpected literal node type.");
   }
 
   return {
     nodeType: "literal",
     literal: {
-      nodeType: "char",
-      char: (left.literal.char * right.literal.char) & 0xff,
+      nodeType: "uint8_t",
+      value: (left.literal.value * right.literal.value) & 0xff,
     },
   };
 };
@@ -305,15 +330,17 @@ const coerceOperatorMultiply = (
   right: LiteralNode
 ): LiteralNode => {
   const leftIsNumeric =
-    left.literal.nodeType === "int" || left.literal.nodeType === "double";
+    left.literal.nodeType === "uint32_t" || left.literal.nodeType === "double";
   const rightIsNumeric =
-    right.literal.nodeType === "int" || right.literal.nodeType === "double";
+    right.literal.nodeType === "uint32_t" ||
+    right.literal.nodeType === "double";
   const bothInt =
-    left.literal.nodeType === "int" && right.literal.nodeType === "int";
+    left.literal.nodeType === "uint32_t" &&
+    right.literal.nodeType === "uint32_t";
 
   if (leftIsNumeric && rightIsNumeric) {
     if (bothInt) {
-      return intOperatorMultiply(left, right);
+      return uint32_tOperatorMultiply(left, right);
     }
     return doubleOperatorMultiply(
       coerceLiteralToDouble(left),
@@ -321,17 +348,17 @@ const coerceOperatorMultiply = (
     );
   }
 
-  const leftIsChar = left.literal.nodeType === "char";
-  const rightIsChar = right.literal.nodeType === "char";
+  const leftIsChar = left.literal.nodeType === "uint8_t";
+  const rightIsChar = right.literal.nodeType === "uint8_t";
   const bothChar = leftIsChar && rightIsChar;
   const bothIntOrChar =
-    (leftIsChar || left.literal.nodeType === "int") &&
-    (rightIsChar || right.literal.nodeType === "int");
+    (leftIsChar || left.literal.nodeType === "uint32_t") &&
+    (rightIsChar || right.literal.nodeType === "uint32_t");
   if (bothIntOrChar) {
     if (bothChar) {
-      return charOperatorMultiply(left, right);
+      return uint8_tOperatorMultiply(left, right);
     }
-    return intOperatorMultiply(
+    return uint32_tOperatorMultiply(
       coerceLiteralToInt(left),
       coerceLiteralToInt(right)
     );
@@ -346,19 +373,22 @@ const coerceOperatorMultiply = (
 // Operator /         //
 ////////////////////////
 
-const intOperatorDivide = (
+const uint32_tOperatorDivide = (
   left: LiteralNode,
   right: LiteralNode
 ): LiteralNode => {
-  if (left.literal.nodeType !== "int" || right.literal.nodeType !== "int") {
+  if (
+    left.literal.nodeType !== "uint32_t" ||
+    right.literal.nodeType !== "uint32_t"
+  ) {
     throw Error("Internal error: Unexpected literal node type.");
   }
 
   return {
     nodeType: "literal",
     literal: {
-      nodeType: "int",
-      int: Math.floor(left.literal.int / right.literal.int),
+      nodeType: "uint32_t",
+      value: Math.floor(left.literal.value / right.literal.value),
     },
   };
 };
@@ -378,24 +408,27 @@ const doubleOperatorDivide = (
     nodeType: "literal",
     literal: {
       nodeType: "double",
-      double: left.literal.double / right.literal.double,
+      value: left.literal.value / right.literal.value,
     },
   };
 };
 
-const charOperatorDivide = (
+const uint8_tOperatorDivide = (
   left: LiteralNode,
   right: LiteralNode
 ): LiteralNode => {
-  if (left.literal.nodeType !== "char" || right.literal.nodeType !== "char") {
+  if (
+    left.literal.nodeType !== "uint8_t" ||
+    right.literal.nodeType !== "uint8_t"
+  ) {
     throw Error("Internal error: Unexpected literal node type.");
   }
 
   return {
     nodeType: "literal",
     literal: {
-      nodeType: "char",
-      char: Math.floor(left.literal.char / right.literal.char) & 0xff,
+      nodeType: "uint8_t",
+      value: Math.floor(left.literal.value / right.literal.value) & 0xff,
     },
   };
 };
@@ -405,15 +438,17 @@ const coerceOperatorDivide = (
   right: LiteralNode
 ): LiteralNode => {
   const leftIsNumeric =
-    left.literal.nodeType === "int" || left.literal.nodeType === "double";
+    left.literal.nodeType === "uint32_t" || left.literal.nodeType === "double";
   const rightIsNumeric =
-    right.literal.nodeType === "int" || right.literal.nodeType === "double";
+    right.literal.nodeType === "uint32_t" ||
+    right.literal.nodeType === "double";
   const bothInt =
-    left.literal.nodeType === "int" && right.literal.nodeType === "int";
+    left.literal.nodeType === "uint32_t" &&
+    right.literal.nodeType === "uint32_t";
 
   if (leftIsNumeric && rightIsNumeric) {
     if (bothInt) {
-      return intOperatorDivide(left, right);
+      return uint32_tOperatorDivide(left, right);
     }
     return doubleOperatorDivide(
       coerceLiteralToDouble(left),
@@ -421,17 +456,17 @@ const coerceOperatorDivide = (
     );
   }
 
-  const leftIsChar = left.literal.nodeType === "char";
-  const rightIsChar = right.literal.nodeType === "char";
+  const leftIsChar = left.literal.nodeType === "uint8_t";
+  const rightIsChar = right.literal.nodeType === "uint8_t";
   const bothChar = leftIsChar && rightIsChar;
   const bothIntOrChar =
-    (leftIsChar || left.literal.nodeType === "int") &&
-    (rightIsChar || right.literal.nodeType === "int");
+    (leftIsChar || left.literal.nodeType === "uint32_t") &&
+    (rightIsChar || right.literal.nodeType === "uint32_t");
   if (bothIntOrChar) {
     if (bothChar) {
-      return charOperatorDivide(left, right);
+      return uint8_tOperatorDivide(left, right);
     }
-    return intOperatorDivide(
+    return uint32_tOperatorDivide(
       coerceLiteralToInt(left),
       coerceLiteralToInt(right)
     );
