@@ -27,18 +27,16 @@ const typeSchema = z.object({
   nodeType: z.literal("type"),
   type: z.union([
     z.literal("int"),
-    z.literal("int*"),
     z.literal("double"),
     z.literal("string"),
     z.literal("char"),
-    z.literal("char*"),
     z.literal("void"),
-    z.literal("void*"),
 
     // The grammar should never output this, but this adds it to TypeNode.type
     // so that we can use it in the runtime engine.
     z.literal("nativeFunction"),
   ]),
+  isPointer: z.boolean(),
 });
 type TypeNode = z.infer<typeof typeSchema>;
 

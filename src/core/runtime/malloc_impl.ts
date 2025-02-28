@@ -129,7 +129,8 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
       nodeType: "runtimeValue",
       type: {
         nodeType: "type",
-        type: "void*",
+        type: "void",
+        isPointer: true,
       },
       value: {
         nodeType: "literal",
@@ -213,7 +214,8 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
       nodeType: "runtimeValue",
       type: {
         nodeType: "type",
-        type: "void*",
+        type: "void",
+        isPointer: true,
       },
       value: {
         nodeType: "literal",
@@ -296,7 +298,8 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
     nodeType: "runtimeValue",
     type: {
       nodeType: "type",
-      type: "void*",
+      type: "void",
+      isPointer: true,
     },
     value: {
       nodeType: "literal",
@@ -320,7 +323,8 @@ const freeImpl = (args: RuntimeValueNode[]): VoidNode => {
 
   const addressValue = coerce(ptrArg, {
     nodeType: "type",
-    type: "void*",
+    type: "void",
+    isPointer: true,
   });
 
   if (addressValue.value.nodeType !== "literal") {

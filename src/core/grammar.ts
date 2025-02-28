@@ -248,8 +248,31 @@ const grammar: nearley.CompiledRules = {
         };
       },
     },
+    { name: "type$subexpression$1", symbols: ["type_pointer"] },
+    { name: "type$subexpression$1", symbols: ["type_raw"] },
     {
-      name: "type$subexpression$1$string$1",
+      name: "type",
+      symbols: ["type$subexpression$1"],
+      postprocess: function (data) {
+        return data[0][0];
+      },
+    },
+    {
+      name: "type_pointer$subexpression$1",
+      symbols: ["type_raw", "_", { literal: "*" }],
+    },
+    {
+      name: "type_pointer",
+      symbols: ["type_pointer$subexpression$1"],
+      postprocess: function (data) {
+        return {
+          ...data[0][0],
+          isPointer: true,
+        };
+      },
+    },
+    {
+      name: "type_raw$subexpression$1$string$1",
       symbols: [
         { literal: "d" },
         { literal: "o" },
@@ -263,11 +286,11 @@ const grammar: nearley.CompiledRules = {
       },
     },
     {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$1"],
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$1"],
     },
     {
-      name: "type$subexpression$1$string$2",
+      name: "type_raw$subexpression$1$string$2",
       symbols: [
         { literal: "s" },
         { literal: "t" },
@@ -281,33 +304,22 @@ const grammar: nearley.CompiledRules = {
       },
     },
     {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$2"],
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$2"],
     },
     {
-      name: "type$subexpression$1$string$3",
+      name: "type_raw$subexpression$1$string$3",
       symbols: [{ literal: "i" }, { literal: "n" }, { literal: "t" }],
       postprocess: function joiner(d) {
         return d.join("");
       },
     },
     {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$3"],
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$3"],
     },
     {
-      name: "type$subexpression$1$string$4",
-      symbols: [{ literal: "i" }, { literal: "n" }, { literal: "t" }],
-      postprocess: function joiner(d) {
-        return d.join("");
-      },
-    },
-    {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$4", "_", { literal: "*" }],
-    },
-    {
-      name: "type$subexpression$1$string$5",
+      name: "type_raw$subexpression$1$string$4",
       symbols: [
         { literal: "c" },
         { literal: "h" },
@@ -319,27 +331,11 @@ const grammar: nearley.CompiledRules = {
       },
     },
     {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$5"],
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$4"],
     },
     {
-      name: "type$subexpression$1$string$6",
-      symbols: [
-        { literal: "c" },
-        { literal: "h" },
-        { literal: "a" },
-        { literal: "r" },
-      ],
-      postprocess: function joiner(d) {
-        return d.join("");
-      },
-    },
-    {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$6", "_", { literal: "*" }],
-    },
-    {
-      name: "type$subexpression$1$string$7",
+      name: "type_raw$subexpression$1$string$5",
       symbols: [
         { literal: "s" },
         { literal: "i" },
@@ -353,29 +349,11 @@ const grammar: nearley.CompiledRules = {
       },
     },
     {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$7"],
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$5"],
     },
     {
-      name: "type$subexpression$1$string$8",
-      symbols: [
-        { literal: "s" },
-        { literal: "i" },
-        { literal: "z" },
-        { literal: "e" },
-        { literal: "_" },
-        { literal: "t" },
-      ],
-      postprocess: function joiner(d) {
-        return d.join("");
-      },
-    },
-    {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$8", "_", { literal: "*" }],
-    },
-    {
-      name: "type$subexpression$1$string$9",
+      name: "type_raw$subexpression$1$string$6",
       symbols: [
         { literal: "v" },
         { literal: "o" },
@@ -387,28 +365,12 @@ const grammar: nearley.CompiledRules = {
       },
     },
     {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$9"],
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$6"],
     },
     {
-      name: "type$subexpression$1$string$10",
-      symbols: [
-        { literal: "v" },
-        { literal: "o" },
-        { literal: "i" },
-        { literal: "d" },
-      ],
-      postprocess: function joiner(d) {
-        return d.join("");
-      },
-    },
-    {
-      name: "type$subexpression$1",
-      symbols: ["type$subexpression$1$string$10", "_", { literal: "*" }],
-    },
-    {
-      name: "type",
-      symbols: ["type$subexpression$1"],
+      name: "type_raw",
+      symbols: ["type_raw$subexpression$1"],
       postprocess: function (data) {
         let type;
         if (data[0].length > 1) {
@@ -426,6 +388,7 @@ const grammar: nearley.CompiledRules = {
         return {
           nodeType: "type",
           type: type,
+          isPointer: false,
         };
       },
     },

@@ -55,6 +55,7 @@ class Engine {
       type: {
         nodeType: "type",
         type: "nativeFunction",
+        isPointer: false,
       },
       value: {
         nodeType: "nativeFunctionDefinition",
@@ -70,6 +71,7 @@ class Engine {
               type: {
                 nodeType: "type",
                 type: "int",
+                isPointer: false,
               },
             },
           },
@@ -91,6 +93,7 @@ class Engine {
       type: {
         nodeType: "type",
         type: "nativeFunction",
+        isPointer: false,
       },
       value: {
         nodeType: "nativeFunctionDefinition",
@@ -105,7 +108,8 @@ class Engine {
               },
               type: {
                 nodeType: "type",
-                type: "void*",
+                type: "void",
+                isPointer: true,
               },
             },
           },
@@ -127,6 +131,7 @@ class Engine {
       type: {
         nodeType: "type",
         type: "nativeFunction",
+        isPointer: false,
       },
       value: {
         nodeType: "nativeFunctionDefinition",
@@ -143,6 +148,7 @@ class Engine {
       type: {
         nodeType: "type",
         type: "nativeFunction",
+        isPointer: false,
       },
       value: {
         nodeType: "nativeFunctionDefinition",
@@ -158,6 +164,7 @@ class Engine {
               type: {
                 nodeType: "type",
                 type: "int",
+                isPointer: false,
               },
             },
           },
@@ -201,13 +208,15 @@ class Engine {
       type: {
         nodeType: "type",
         type: "nativeFunction",
+        isPointer: false,
       },
       value: {
         nodeType: "nativeFunctionDefinition",
         arguments: [
           {
             nodeType: "type",
-            type: "void*", // Again, a hack. This doesn't actually matter, just a placeholder.
+            type: "void", // Again, a hack. This doesn't actually matter, just a placeholder.
+            isPointer: false,
           },
         ],
         body: (args: (RuntimeValueNode | TypeNode)[]) => {
@@ -241,9 +250,9 @@ class Engine {
             size = 4;
           }
 
-          return {
+          const returnValue: RuntimeValueNode = {
             nodeType: "runtimeValue",
-            type: { nodeType: "type", type: "int" },
+            type: { nodeType: "type", type: "int", isPointer: false },
             value: {
               nodeType: "literal",
               literal: {
@@ -252,6 +261,8 @@ class Engine {
               },
             },
           };
+
+          return returnValue;
         },
       },
     },
@@ -261,6 +272,7 @@ class Engine {
       type: {
         nodeType: "type",
         type: "nativeFunction",
+        isPointer: false,
       },
       value: {
         nodeType: "nativeFunctionDefinition",
@@ -308,6 +320,7 @@ class Engine {
       type: {
         nodeType: "type",
         type: "int",
+        isPointer: false,
       },
       value: {
         nodeType: "literal",
@@ -323,6 +336,7 @@ class Engine {
       type: {
         nodeType: "type",
         type: "int",
+        isPointer: false,
       },
       value: {
         nodeType: "literal",
@@ -338,6 +352,7 @@ class Engine {
       type: {
         nodeType: "type",
         type: "int",
+        isPointer: false,
       },
       value: {
         nodeType: "literal",
@@ -353,6 +368,7 @@ class Engine {
       type: {
         nodeType: "type",
         type: "int",
+        isPointer: false,
       },
       value: {
         nodeType: "literal",
@@ -368,6 +384,7 @@ class Engine {
       type: {
         nodeType: "type",
         type: "nativeFunction",
+        isPointer: false,
       },
       value: {
         nodeType: "nativeFunctionDefinition",
@@ -383,6 +400,7 @@ class Engine {
               type: {
                 nodeType: "type",
                 type: "int",
+                isPointer: false,
               },
             },
           },
@@ -444,6 +462,7 @@ class Engine {
       const type: TypeNode = {
         nodeType: "type",
         type: statement.literal.nodeType,
+        isPointer: false,
       };
 
       return {
@@ -493,7 +512,11 @@ class Engine {
 
       return {
         nodeType: "runtimeValue",
-        type: { nodeType: "type", type: literal.literal.nodeType },
+        type: {
+          nodeType: "type",
+          type: literal.literal.nodeType,
+          isPointer: false,
+        },
         value: literal,
       };
     } else if (statement.nodeType === "cast") {
@@ -588,7 +611,11 @@ class Engine {
       let scopeItem: RuntimeValueNode;
 
       if (address !== undefined) {
-        const coerced = coerce(value, { nodeType: "type", type: "int" });
+        const coerced = coerce(value, {
+          nodeType: "type",
+          type: "int",
+          isPointer: false,
+        });
         if (coerced.value.nodeType !== "literal") {
           throw new Error(
             `Internal error: Expected coerced value to be of type "literal", but got ${coerced.value.nodeType}.`
@@ -728,16 +755,16 @@ class Engine {
         literal: { nodeType: "int", int: state.heap[address] },
       };
 
-      if (runtimeValue.type.type === "int*") {
+      if (runtimeValue.type.type === "int") {
         return {
           nodeType: "runtimeValue",
-          type: { nodeType: "type", type: "int" },
+          type: { nodeType: "type", type: "int", isPointer: false },
           value: value,
         };
-      } else if (runtimeValue.type.type === "char*") {
+      } else if (runtimeValue.type.type === "char") {
         return {
           nodeType: "runtimeValue",
-          type: { nodeType: "type", type: "char" },
+          type: { nodeType: "type", type: "char", isPointer: false },
           value: coerceLiteralToChar(value),
         };
       } else {
@@ -755,7 +782,7 @@ class Engine {
       throw new Error(`Type error: Cannot dereference native function.`);
     }
 
-    if (value.type.type[value.type.type.length - 1] !== "*") {
+    if (!value.type.isPointer) {
       throw new Error(
         `Type error: Cannot dereference non-pointer type ${value.type.type}.`
       );

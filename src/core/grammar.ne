@@ -139,7 +139,22 @@ parenthesis -> "(" statement ")" {%
   }
 %}
 
-type -> ( "double" | "string" | "int" | "int" _ "*" | "char" | "char" _ "*" | "size_t" | "size_t" _ "*" | "void" | "void" _ "*") {%
+type -> ( type_pointer | type_raw ) {%
+  function(data) {
+    return data[0][0]
+  }
+%}
+
+type_pointer -> ( type_raw _ "*" ) {%
+  function(data) {
+    return {
+      ...data[0][0],
+      isPointer: true,
+    }
+  }
+%}
+
+type_raw -> ( "double" | "string" | "int" | "char" | "size_t" | "void" ) {%
   function(data) {
     let type;
     if (data[0].length > 1) {
@@ -157,7 +172,8 @@ type -> ( "double" | "string" | "int" | "int" _ "*" | "char" | "char" _ "*" | "s
 
     return {
       nodeType: 'type',
-      type: type
+      type: type,
+      isPointer: false,
     }
   }
 %}

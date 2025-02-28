@@ -108,7 +108,7 @@ const coerce = (value: RuntimeValueNode, type: TypeNode): RuntimeValueNode => {
       type: type,
       value: coerceLiteralToDouble(value.value),
     };
-  } else if (type.type === "char" || type.type.includes("*")) {
+  } else if (type.type === "char" || type.isPointer) {
     return {
       nodeType: "runtimeValue",
       type: type,
