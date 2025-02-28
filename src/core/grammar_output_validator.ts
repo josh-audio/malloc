@@ -180,6 +180,7 @@ const statementSchema: ZodType<StatementNode> = z.lazy(() =>
     operatorSchema,
     parenthesisSchema,
     dereferenceSchema,
+    typeSchema,
   ])
 );
 type StatementNode =
@@ -192,7 +193,8 @@ type StatementNode =
   | CastNode
   | OperatorNode
   | ParenthesisNode
-  | DereferenceNode;
+  | DereferenceNode
+  | TypeNode;
 
 export type {
   StatementNode,

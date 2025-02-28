@@ -772,9 +772,13 @@ class Engine {
           `Internal error: Unexpected pointer type ${runtimeValue.type.type}.`
         );
       }
+    } else if (statement.nodeType === "type") {
+      return { nodeType: "void" };
     }
 
-    throw Error("Internal error: Unexpected statement node type.");
+    throw Error(
+      `Internal error: Unexpected statement node type: ${statement.nodeType}`
+    );
   }
 
   private getDereferenceAddress(value: RuntimeValueNode): number {
