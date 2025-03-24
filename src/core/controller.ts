@@ -105,15 +105,14 @@ class Controller {
             text: `-> void`,
           });
         } else if (
-          result.nodeType === "runtimeValue" &&
+          (result.nodeType === "runtimeValue" ||
+            result.nodeType === "typedRuntimeValue") &&
           result.value.nodeType === "literal"
         ) {
-          if (result.value.literal.nodeType === "uint8_t") {
+          if (result.value.literal.nodeType === "integer") {
             outputResult = result.value.literal.value.toString();
           } else if (result.value.literal.nodeType === "string") {
             outputResult = `"${result.value.literal.value}"`;
-          } else if (result.value.literal.nodeType === "uint32_t") {
-            outputResult = result.value.literal.value.toString();
           } else if (result.value.literal.nodeType === "double") {
             outputResult = result.value.literal.value.toString();
           }

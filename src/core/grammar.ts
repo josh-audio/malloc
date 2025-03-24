@@ -314,8 +314,8 @@ const grammar: nearley.CompiledRules = {
         { literal: "i" },
         { literal: "n" },
         { literal: "t" },
-        { literal: "3" },
-        { literal: "2" },
+        { literal: "6" },
+        { literal: "4" },
         { literal: "_" },
         { literal: "t" },
       ],
@@ -329,7 +329,12 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type_raw$subexpression$1$string$4",
-      symbols: [{ literal: "i" }, { literal: "n" }, { literal: "t" }],
+      symbols: [
+        { literal: "l" },
+        { literal: "o" },
+        { literal: "n" },
+        { literal: "g" },
+      ],
       postprocess: function joiner(d) {
         return d.join("");
       },
@@ -345,7 +350,8 @@ const grammar: nearley.CompiledRules = {
         { literal: "i" },
         { literal: "n" },
         { literal: "t" },
-        { literal: "8" },
+        { literal: "3" },
+        { literal: "2" },
         { literal: "_" },
         { literal: "t" },
       ],
@@ -359,6 +365,73 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type_raw$subexpression$1$string$6",
+      symbols: [{ literal: "i" }, { literal: "n" }, { literal: "t" }],
+      postprocess: function joiner(d) {
+        return d.join("");
+      },
+    },
+    {
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$6"],
+    },
+    {
+      name: "type_raw$subexpression$1$string$7",
+      symbols: [
+        { literal: "u" },
+        { literal: "i" },
+        { literal: "n" },
+        { literal: "t" },
+        { literal: "1" },
+        { literal: "6" },
+        { literal: "_" },
+        { literal: "t" },
+      ],
+      postprocess: function joiner(d) {
+        return d.join("");
+      },
+    },
+    {
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$7"],
+    },
+    {
+      name: "type_raw$subexpression$1$string$8",
+      symbols: [
+        { literal: "s" },
+        { literal: "h" },
+        { literal: "o" },
+        { literal: "r" },
+        { literal: "t" },
+      ],
+      postprocess: function joiner(d) {
+        return d.join("");
+      },
+    },
+    {
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$8"],
+    },
+    {
+      name: "type_raw$subexpression$1$string$9",
+      symbols: [
+        { literal: "u" },
+        { literal: "i" },
+        { literal: "n" },
+        { literal: "t" },
+        { literal: "8" },
+        { literal: "_" },
+        { literal: "t" },
+      ],
+      postprocess: function joiner(d) {
+        return d.join("");
+      },
+    },
+    {
+      name: "type_raw$subexpression$1",
+      symbols: ["type_raw$subexpression$1$string$9"],
+    },
+    {
+      name: "type_raw$subexpression$1$string$10",
       symbols: [
         { literal: "s" },
         { literal: "i" },
@@ -373,10 +446,10 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type_raw$subexpression$1",
-      symbols: ["type_raw$subexpression$1$string$6"],
+      symbols: ["type_raw$subexpression$1$string$10"],
     },
     {
-      name: "type_raw$subexpression$1$string$7",
+      name: "type_raw$subexpression$1$string$11",
       symbols: [
         { literal: "c" },
         { literal: "h" },
@@ -389,10 +462,10 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type_raw$subexpression$1",
-      symbols: ["type_raw$subexpression$1$string$7"],
+      symbols: ["type_raw$subexpression$1$string$11"],
     },
     {
-      name: "type_raw$subexpression$1$string$8",
+      name: "type_raw$subexpression$1$string$12",
       symbols: [
         { literal: "v" },
         { literal: "o" },
@@ -405,7 +478,7 @@ const grammar: nearley.CompiledRules = {
     },
     {
       name: "type_raw$subexpression$1",
-      symbols: ["type_raw$subexpression$1$string$8"],
+      symbols: ["type_raw$subexpression$1$string$12"],
     },
     {
       name: "type_raw",
@@ -416,8 +489,12 @@ const grammar: nearley.CompiledRules = {
 
         if (type === "size_t" || type === "char") {
           type = "uint8_t";
+        } else if (type === "short") {
+          type = "uint16_t";
         } else if (type === "int") {
           type = "uint32_t";
+        } else if (type === "long") {
+          type = "uint64_t";
         }
 
         return {
@@ -463,7 +540,7 @@ const grammar: nearley.CompiledRules = {
       symbols: ["intDecimal$ebnf$1"],
       postprocess: function (data) {
         return {
-          nodeType: "uint32_t",
+          nodeType: "integer",
           value: parseInt(data[0].join().replace(/,/g, "")),
         };
       },
@@ -488,7 +565,7 @@ const grammar: nearley.CompiledRules = {
       symbols: ["intHex$string$1", "intHex$ebnf$1"],
       postprocess: function (data) {
         return {
-          nodeType: "uint32_t",
+          nodeType: "integer",
           value: parseInt(data[1].join().replace(/,/g, ""), 16),
         };
       },
@@ -546,7 +623,7 @@ const grammar: nearley.CompiledRules = {
       symbols: [{ literal: "'" }, /[^']/, { literal: "'" }],
       postprocess: function (data) {
         return {
-          nodeType: "uint8_t",
+          nodeType: "integer",
           value: data[1].charCodeAt(0),
         };
       },

@@ -90,24 +90,18 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
     );
   }
 
-  if (sizeArg.type.type !== "uint32_t") {
-    throw new Error(
-      "Type error: Invalid type for malloc size. Expected int, got " +
-        sizeArg.type.type
-    );
-  }
-
   if (sizeArg.value.nodeType !== "literal") {
     throw new Error(
+      
       "Type error: Invalid type for malloc size. Expected literal, got " +
         sizeArg.value.nodeType
     );
   }
 
-  if (sizeArg.value.literal.nodeType !== "uint32_t") {
+  if (sizeArg.value.literal.nodeType !== "integer") {
     throw new Error(
-      "Internal error: Mismatched literal type for malloc size. Expected int, got " +
-        sizeArg.value.literal.nodeType
+      "Type error: Invalid type for malloc size. Expected int, got " +
+      sizeArg.value.literal.nodeType
     );
   }
 
@@ -127,15 +121,10 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
     // Out of memory
     return {
       nodeType: "runtimeValue",
-      type: {
-        nodeType: "type",
-        type: "void",
-        isPointer: true,
-      },
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "uint8_t",
+          nodeType: "integer",
           value: 0, // Null pointer
         },
       },
@@ -212,15 +201,10 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
 
     return {
       nodeType: "runtimeValue",
-      type: {
-        nodeType: "type",
-        type: "void",
-        isPointer: true,
-      },
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "uint8_t",
+          nodeType: "integer",
           value: newBlockStart + 2, // Skip the block header
         },
       },
@@ -296,15 +280,10 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
   // If we get here, we didn't find a suitable block
   return {
     nodeType: "runtimeValue",
-    type: {
-      nodeType: "type",
-      type: "void",
-      isPointer: true,
-    },
     value: {
       nodeType: "literal",
       literal: {
-        nodeType: "uint8_t",
+        nodeType: "integer",
         value: 0, // Null pointer
       },
     },
@@ -331,7 +310,7 @@ const freeImpl = (args: RuntimeValueNode[]): VoidNode => {
     throw new Error("Internal error (free()): Bad output from coerce()");
   }
 
-  if (addressValue.value.literal.nodeType !== "uint8_t") {
+  if (addressValue.value.literal.nodeType !== "integer") {
     throw new Error("Internal error (free()): Bad output from coerce()");
   }
 

@@ -156,8 +156,10 @@ type_pointer -> ( type_raw _ "*" ) {%
 
 type_raw -> (
   "double"
-  | "string" 
+  | "string"
+  | "uint64_t" | "long"
   | "uint32_t" | "int"
+  | "uint16_t" | "short"
   | "uint8_t" | "size_t" | "char"
   | "void"
 ) {%
@@ -167,8 +169,12 @@ type_raw -> (
 
     if (type === 'size_t' || type === 'char') {
       type = 'uint8_t';
+    } else if (type === 'short') {
+      type = 'uint16_t';
     } else if (type === 'int') {
       type = 'uint32_t';
+    } else if (type === 'long') {
+      type = 'uint64_t';
     }
 
     return {
@@ -197,7 +203,7 @@ int -> (intDecimal | intHex) {%
 intDecimal -> [0-9]:+ {%
   function(data) {
     return {
-      nodeType: 'uint32_t',
+      nodeType: 'integer',
       value: parseInt(data[0].join().replace(/,/g, ''))
     }
   }
@@ -206,7 +212,7 @@ intDecimal -> [0-9]:+ {%
 intHex -> "0x" [0-9a-fA-F]:+ {%
   function(data) {
     return {
-      nodeType: 'uint32_t',
+      nodeType: 'integer',
       value: parseInt(data[1].join().replace(/,/g, ''), 16)
     }
   }
@@ -233,7 +239,7 @@ string -> "\"" [^"]:* "\"" {%
 char -> "'" [^'] "'" {%
   function(data) {
     return {
-      nodeType: 'uint8_t',
+      nodeType: 'integer',
       value: data[1].charCodeAt(0)
     }
   }

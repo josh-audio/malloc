@@ -5,7 +5,7 @@ import {
   StatementNode,
   TypeNode,
 } from "../grammar_output_validator";
-import { coerce, coerceLiteralToChar, coerceLiteralToInt } from "./coerce";
+import { coerce, coerceLiteralToU8 } from "./coerce";
 import {
   BEST_FIT,
   FIRST_FIT,
@@ -40,18 +40,26 @@ type NativeFunctionDefinitionNode = {
   body: (args: (RuntimeValueNode | TypeNode)[]) => RuntimeValueNode | VoidNode;
 };
 
+// Represents a raw runtime value. All integer types are just "integer" here.
 type RuntimeValueNode = {
   nodeType: "runtimeValue";
+  value: LiteralNode | NativeFunctionDefinitionNode;
+};
+
+// Represents a runtime value with a concrete type. This is currently just used
+// to disambiguate integer types.
+type TypedRuntimeValueNode = {
+  nodeType: "typedRuntimeValue";
   type: TypeNode;
   value: LiteralNode | NativeFunctionDefinitionNode;
 };
 
-type Scope = Record<string, RuntimeValueNode>;
+type Scope = Record<string, TypedRuntimeValueNode>;
 
 class Engine {
   globalScope: Scope = {
     malloc: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
         type: "nativeFunction",
@@ -89,7 +97,7 @@ class Engine {
     },
 
     free: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
         type: "nativeFunction",
@@ -127,7 +135,7 @@ class Engine {
     },
 
     clear: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
         type: "nativeFunction",
@@ -144,7 +152,7 @@ class Engine {
     },
 
     setDisplayBase: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
         type: "nativeFunction",
@@ -182,7 +190,7 @@ class Engine {
             );
           }
 
-          if (args[0].value.literal.nodeType !== "uint32_t") {
+          if (args[0].value.literal.nodeType !== "integer") {
             throw new Error(
               `Internal error: Expected argument 0 to be of type int, but got ${args[0].value.literal.nodeType}.`
             );
@@ -204,7 +212,7 @@ class Engine {
     },
 
     sizeof: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
         type: "nativeFunction",
@@ -252,11 +260,10 @@ class Engine {
 
           const returnValue: RuntimeValueNode = {
             nodeType: "runtimeValue",
-            type: { nodeType: "type", type: "uint32_t", isPointer: false },
             value: {
               nodeType: "literal",
               literal: {
-                nodeType: "uint32_t",
+                nodeType: "integer",
                 value: size,
               },
             },
@@ -268,7 +275,7 @@ class Engine {
     },
 
     reset: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
         type: "nativeFunction",
@@ -285,10 +292,11 @@ class Engine {
     },
 
     // __debug: {
-    //   nodeType: "runtimeValue",
+    //   nodeType: "typedRuntimeValue",
     //   type: {
     //     nodeType: "type",
     //     type: "nativeFunction",
+    //     isPointer: false,
     //   },
     //   value: {
     //     nodeType: "nativeFunctionDefinition",
@@ -316,71 +324,71 @@ class Engine {
     // },
 
     FIRST_FIT: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
-        type: "uint32_t",
+        type: "uint8_t",
         isPointer: false,
       },
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "uint32_t",
+          nodeType: "integer",
           value: FIRST_FIT,
         },
       },
     },
 
     NEXT_FIT: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
-        type: "uint32_t",
+        type: "uint8_t",
         isPointer: false,
       },
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "uint32_t",
+          nodeType: "integer",
           value: NEXT_FIT,
         },
       },
     },
 
     BEST_FIT: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
-        type: "uint32_t",
+        type: "uint8_t",
         isPointer: false,
       },
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "uint32_t",
+          nodeType: "integer",
           value: BEST_FIT,
         },
       },
     },
 
     WORST_FIT: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
-        type: "uint32_t",
+        type: "uint8_t",
         isPointer: false,
       },
       value: {
         nodeType: "literal",
         literal: {
-          nodeType: "uint32_t",
+          nodeType: "integer",
           value: WORST_FIT,
         },
       },
     },
 
     setStrategy: {
-      nodeType: "runtimeValue",
+      nodeType: "typedRuntimeValue",
       type: {
         nodeType: "type",
         type: "nativeFunction",
@@ -418,7 +426,7 @@ class Engine {
             );
           }
 
-          if (args[0].value.literal.nodeType !== "uint32_t") {
+          if (args[0].value.literal.nodeType !== "integer") {
             throw new Error(
               `Internal error: Expected argument 0 to be of type int, but got ${args[0].value.literal.nodeType}.`
             );
@@ -457,17 +465,12 @@ class Engine {
 
   // Recursively evaluates the given statement. Returns a literal node if the
   // statement evaluates to a value, otherwise returns a void node.
-  evaluate(statement: StatementNode): RuntimeValueNode | VoidNode {
+  evaluate(
+    statement: StatementNode
+  ): RuntimeValueNode | TypedRuntimeValueNode | VoidNode {
     if (statement.nodeType === "literal") {
-      const type: TypeNode = {
-        nodeType: "type",
-        type: statement.literal.nodeType,
-        isPointer: false,
-      };
-
       return {
         nodeType: "runtimeValue",
-        type: type,
         value: statement,
       };
     } else if (statement.nodeType === "operator") {
@@ -512,11 +515,6 @@ class Engine {
 
       return {
         nodeType: "runtimeValue",
-        type: {
-          nodeType: "type",
-          type: literal.literal.nodeType,
-          isPointer: false,
-        },
         value: literal,
       };
     } else if (statement.nodeType === "cast") {
@@ -528,7 +526,13 @@ class Engine {
         );
       }
 
-      return coerce(result, statement.type);
+      return coerce(
+        {
+          nodeType: "runtimeValue",
+          value: result.value,
+        },
+        statement.type
+      );
     } else if (statement.nodeType == "parenthesis") {
       return this.evaluate(statement.statement);
     } else if (statement.nodeType === "declaration") {
@@ -540,7 +544,7 @@ class Engine {
 
       if (statement.declaration.type.type === "string") {
         this.globalScope[statement.declaration.identifier.identifier] = {
-          nodeType: "runtimeValue",
+          nodeType: "typedRuntimeValue",
           type: statement.declaration.type,
           value: {
             nodeType: "literal",
@@ -554,11 +558,10 @@ class Engine {
         this.globalScope[statement.declaration.identifier.identifier] = coerce(
           {
             nodeType: "runtimeValue",
-            type: statement.declaration.type,
             value: {
               nodeType: "literal",
               literal: {
-                nodeType: "uint32_t",
+                nodeType: "integer",
                 value: 0,
               },
             },
@@ -573,7 +576,7 @@ class Engine {
 
       if (value === undefined) {
         throw new Error(
-          `Runtime error: Identifier ${statement.identifier} is not defined.`
+          `Runtime error: Identifier "${statement.identifier}" is not defined.`
         );
       }
 
@@ -589,6 +592,10 @@ class Engine {
 
         if (runtimeValue.nodeType === "void") {
           throw new Error(`Runtime error: Cannot dereference void value.`);
+        }
+
+        if (runtimeValue.nodeType === "runtimeValue") {
+          throw new Error(`Cannot dereference literal value.`);
         }
 
         // If the left side is a dereference, store the memory address for later
@@ -608,21 +615,27 @@ class Engine {
         throw new Error(`Runtime error: Cannot assign void to variable.`);
       }
 
-      let scopeItem: RuntimeValueNode;
+      let scopeItem: TypedRuntimeValueNode;
 
       if (address !== undefined) {
-        const coerced = coerce(value, {
-          nodeType: "type",
-          type: "uint32_t",
-          isPointer: false,
-        });
+        const coerced = coerce(
+          {
+            nodeType: "runtimeValue",
+            value: value.value,
+          },
+          {
+            nodeType: "type",
+            type: "uint32_t",
+            isPointer: false,
+          }
+        );
         if (coerced.value.nodeType !== "literal") {
           throw new Error(
             `Internal error: Expected coerced value to be of type "literal", but got ${coerced.value.nodeType}.`
           );
-        } else if (coerced.value.literal.nodeType !== "uint32_t") {
+        } else if (coerced.value.literal.nodeType !== "integer") {
           throw new Error(
-            `Internal error: Expected coerced value to be of type "uint32_t", but got ${coerced.type.type}.`
+            `Internal error: Expected coerced value to be of type "uint32_t", but got ${coerced.value.literal.nodeType}.`
           );
         }
 
@@ -640,12 +653,21 @@ class Engine {
       // Set the value in the global scope
       else if (statement.left.nodeType === "identifier") {
         scopeItem = coerce(
-          value,
+          {
+            nodeType: "runtimeValue",
+            value: value.value,
+          },
           this.globalScope[statement.left.identifier].type
         );
         this.globalScope[statement.left.identifier] = scopeItem;
       } else if (statement.left.nodeType === "declaration") {
-        scopeItem = coerce(value, statement.left.declaration.type);
+        scopeItem = coerce(
+          {
+            nodeType: "runtimeValue",
+            value: value.value,
+          },
+          statement.left.declaration.type
+        );
         this.globalScope[statement.left.declaration.identifier.identifier] =
           scopeItem;
       } else {
@@ -742,6 +764,11 @@ class Engine {
         throw new Error(`Runtime error: Cannot dereference void value.`);
       }
 
+      if (runtimeValue.nodeType === "runtimeValue") {
+        // TODO: should change this to "untypedRuntimeValue"
+        throw new Error(`Cannot dereference literal value.`);
+      }
+
       const address = this.getDereferenceAddress(runtimeValue);
 
       if (address < 0 || address >= state.heap.length) {
@@ -750,28 +777,38 @@ class Engine {
         );
       }
 
-      const value: LiteralNode = {
-        nodeType: "literal",
-        literal: { nodeType: "uint32_t", value: state.heap[address] },
-      };
+      let bytes: number[] = [];
 
-      if (runtimeValue.type.type === "uint32_t") {
-        return {
-          nodeType: "runtimeValue",
-          type: { nodeType: "type", type: "uint32_t", isPointer: false },
-          value: value,
-        };
-      } else if (runtimeValue.type.type === "uint8_t") {
-        return {
-          nodeType: "runtimeValue",
-          type: { nodeType: "type", type: "uint8_t", isPointer: false },
-          value: coerceLiteralToChar(value),
-        };
+      if (runtimeValue.type.type === "uint8_t") {
+        bytes = this.readFromHeap(address, 1);
+      } else if (runtimeValue.type.type === "uint16_t") {
+        bytes = this.readFromHeap(address, 2);
+      } else if (runtimeValue.type.type === "uint32_t") {
+        bytes = this.readFromHeap(address, 4);
+      } else if (runtimeValue.type.type === "uint64_t") {
+        bytes = this.readFromHeap(address, 8);
       } else {
         throw new Error(
           `Internal error: Unexpected pointer type ${runtimeValue.type.type}.`
         );
       }
+
+      return {
+        nodeType: "runtimeValue",
+        value: {
+          nodeType: "literal",
+          literal: {
+            nodeType:
+              runtimeValue.type.type === "uint8_t" ? "integer" : "double",
+            // TODO: This has to be reworked as it produces negative integers for unsigned types
+            // also we really need to be able to distinguish signed and unsigned
+            value: bytes.reduce(
+              (acc, byte, index) => acc + (byte << (index * 8)),
+              0
+            ),
+          },
+        },
+      };
     } else if (statement.nodeType === "type") {
       return { nodeType: "void" };
     }
@@ -781,7 +818,7 @@ class Engine {
     );
   }
 
-  private getDereferenceAddress(value: RuntimeValueNode): number {
+  private getDereferenceAddress(value: TypedRuntimeValueNode): number {
     if (value.type.type === "nativeFunction") {
       throw new Error(`Type error: Cannot dereference native function.`);
     }
@@ -798,10 +835,10 @@ class Engine {
       );
     }
 
-    const coercedValue = coerceLiteralToInt(value.value).literal;
-    if (coercedValue.nodeType !== "uint32_t") {
+    const coercedValue = coerceLiteralToU8(value.value).literal;
+    if (coercedValue.nodeType !== "integer") {
       throw new Error(
-        `Internal error: Expected coerced value to be of type "uint32_t", but got ${coercedValue.nodeType}.`
+        `Internal error: Expected coerced value to be of type "integer", but got ${coercedValue.nodeType}.`
       );
     }
 
@@ -809,9 +846,19 @@ class Engine {
 
     return address;
   }
+
+  private readFromHeap(address: number, numBytes: number): number[] {
+    if (address < 0 || address + numBytes > state.heap.length) {
+      throw new Error(
+        `Segmentation fault: Attempted to read outside of the heap bounds.`
+      );
+    }
+
+    return state.heap.slice(address, address + numBytes);
+  }
 }
 
 const engine = new Engine();
 
 export default engine;
-export type { Scope, RuntimeValueNode, VoidNode };
+export type { Scope, RuntimeValueNode, VoidNode, TypedRuntimeValueNode };

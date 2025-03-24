@@ -9,10 +9,9 @@ import { z, ZodType } from "zod";
 const literalSchema = z.object({
   nodeType: z.literal("literal"),
   literal: z.discriminatedUnion("nodeType", [
-    z.object({ nodeType: z.literal("uint32_t"), value: z.number() }),
+    z.object({ nodeType: z.literal("integer"), value: z.number() }),
     z.object({ nodeType: z.literal("double"), value: z.number() }),
     z.object({ nodeType: z.literal("string"), value: z.string() }),
-    z.object({ nodeType: z.literal("uint8_t"), value: z.number() }),
   ]),
 });
 type LiteralNode = z.infer<typeof literalSchema>;
@@ -26,10 +25,12 @@ type IdentifierNode = z.infer<typeof identifierSchema>;
 const typeSchema = z.object({
   nodeType: z.literal("type"),
   type: z.union([
+    z.literal("uint64_t"),
     z.literal("uint32_t"),
+    z.literal("uint16_t"),
+    z.literal("uint8_t"),
     z.literal("double"),
     z.literal("string"),
-    z.literal("uint8_t"),
     z.literal("void"),
 
     // The grammar should never output this, but this adds it to TypeNode.type
