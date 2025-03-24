@@ -506,6 +506,7 @@ const grammar: nearley.CompiledRules = {
     },
     { name: "literal$subexpression$1", symbols: ["int"] },
     { name: "literal$subexpression$1", symbols: ["double"] },
+    { name: "literal$subexpression$1", symbols: ["doubleNegative"] },
     { name: "literal$subexpression$1", symbols: ["string"] },
     { name: "literal$subexpression$1", symbols: ["char"] },
     {
@@ -519,6 +520,7 @@ const grammar: nearley.CompiledRules = {
       },
     },
     { name: "int$subexpression$1", symbols: ["intDecimal"] },
+    { name: "int$subexpression$1", symbols: ["intDecimalNegative"] },
     { name: "int$subexpression$1", symbols: ["intHex"] },
     {
       name: "int",
@@ -527,17 +529,31 @@ const grammar: nearley.CompiledRules = {
         return data[0][0];
       },
     },
-    { name: "intDecimal$ebnf$1", symbols: [/[0-9]/] },
     {
-      name: "intDecimal$ebnf$1",
-      symbols: ["intDecimal$ebnf$1", /[0-9]/],
+      name: "intDecimalNegative",
+      symbols: [{ literal: "-" }, "intDecimal"],
+      postprocess: function (data) {
+        return {
+          nodeType: "integer",
+          value: -data[1].value,
+        };
+      },
+    },
+    { name: "intDecimal$subexpression$1$ebnf$1", symbols: [/[0-9]/] },
+    {
+      name: "intDecimal$subexpression$1$ebnf$1",
+      symbols: ["intDecimal$subexpression$1$ebnf$1", /[0-9]/],
       postprocess: function arrpush(d) {
         return d[0].concat([d[1]]);
       },
     },
     {
+      name: "intDecimal$subexpression$1",
+      symbols: ["intDecimal$subexpression$1$ebnf$1"],
+    },
+    {
       name: "intDecimal",
-      symbols: ["intDecimal$ebnf$1"],
+      symbols: ["intDecimal$subexpression$1"],
       postprocess: function (data) {
         return {
           nodeType: "integer",
@@ -567,6 +583,16 @@ const grammar: nearley.CompiledRules = {
         return {
           nodeType: "integer",
           value: parseInt(data[1].join().replace(/,/g, ""), 16),
+        };
+      },
+    },
+    {
+      name: "doubleNegative",
+      symbols: [{ literal: "-" }, "double"],
+      postprocess: function (data) {
+        return {
+          nodeType: "double",
+          value: -data[1].value,
         };
       },
     },

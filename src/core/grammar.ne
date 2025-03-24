@@ -185,7 +185,7 @@ type_raw -> (
   }
 %}
 
-literal -> (int | double | string | char) {%
+literal -> (int | double | doubleNegative | string | char) {%
   function(data) {
     return {
       nodeType: 'literal',
@@ -194,13 +194,22 @@ literal -> (int | double | string | char) {%
   }
 %}
 
-int -> (intDecimal | intHex) {%
+int -> (intDecimal | intDecimalNegative | intHex) {%
   function(data) {
     return data[0][0]
   }
 %}
 
-intDecimal -> [0-9]:+ {%
+intDecimalNegative -> "-" intDecimal {%
+  function(data) {
+    return {
+      nodeType: 'integer',
+      value: -data[1].value
+    }
+  }
+%}
+
+intDecimal -> ([0-9]:+) {%
   function(data) {
     return {
       nodeType: 'integer',
@@ -214,6 +223,15 @@ intHex -> "0x" [0-9a-fA-F]:+ {%
     return {
       nodeType: 'integer',
       value: parseInt(data[1].join().replace(/,/g, ''), 16)
+    }
+  }
+%}
+
+doubleNegative -> "-" double {%
+  function(data) {
+    return {
+      nodeType: 'double',
+      value: -data[1].value
     }
   }
 %}
