@@ -105,7 +105,7 @@ class Controller {
             text: `-> void`,
           });
         } else if (
-          (result.nodeType === "runtimeValue" ||
+          (result.nodeType === "untypedRuntimeValue" ||
             result.nodeType === "typedRuntimeValue") &&
           result.value.nodeType === "literal"
         ) {

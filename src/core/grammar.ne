@@ -157,24 +157,46 @@ type_pointer -> ( type_raw _ "*" ) {%
 type_raw -> (
   "double"
   | "string"
-  | "uint64_t" | "long"
-  | "uint32_t" | "int"
-  | "uint16_t" | "short"
-  | "uint8_t" | "size_t" | "char"
+  | "uint64_t" | "unsigned" _ "long"
+  | "uint32_t" | "unsigned" _ "int"
+  | "uint16_t" | "unsigned" _ "short"
+  | "uint8_t" | "size_t" | "unsigned" _ "char"
+  | "int64_t" | "long"
+  | "int32_t" | "int"
+  | "int16_t" | "short"
+  | "int8_t" | "char"
   | "void"
 ) {%
   function(data) {
     let type;
     type = data[0][0];
 
-    if (type === 'size_t' || type === 'char') {
+    if (type === 'size_t') {
       type = 'uint8_t';
+    }
+
+    else if (data[0][0] === 'unsigned') {
+      type = data[0][2];
+
+      if (type === 'char') {
+        type = 'uint8_t';
+      } else if (type === 'short') {
+        type = 'uint16_t';
+      } else if (type === 'int') {
+        type = 'uint32_t';
+      } else if (type === 'long') {
+        type = 'uint64_t';
+      }
+    }
+    
+    else if (type === 'char') {
+      type = 'int8_t';
     } else if (type === 'short') {
-      type = 'uint16_t';
+      type = 'int16_t';
     } else if (type === 'int') {
-      type = 'uint32_t';
+      type = 'int32_t';
     } else if (type === 'long') {
-      type = 'uint64_t';
+      type = 'int64_t';
     }
 
     return {

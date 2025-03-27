@@ -1,6 +1,10 @@
 import state from "../../state/state";
 import { coerce } from "./coerce";
-import { RuntimeValueNode, VoidNode } from "./engine";
+import {
+  TypedRuntimeValueNode,
+  UntypedRuntimeValueNode,
+  VoidNode,
+} from "./engine";
 
 const FIRST_FIT = 0;
 const NEXT_FIT = 1;
@@ -80,19 +84,20 @@ const writeFreeBlockHeader = (index: number, size: number, next: number) => {
   writeToHeap(index + 1, next);
 };
 
-const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
+const mallocImpl = (
+  args: UntypedRuntimeValueNode[]
+): UntypedRuntimeValueNode => {
   const sizeArg = args[0];
 
-  if (sizeArg.nodeType !== "runtimeValue") {
+  if (sizeArg.nodeType !== "untypedRuntimeValue") {
     throw new Error(
-      "Type error: Invalid type for malloc size. Expected runtimeValue, got " +
+      "Type error: Invalid type for malloc size. Expected untypedRuntimeValue, got " +
         sizeArg.nodeType
     );
   }
 
   if (sizeArg.value.nodeType !== "literal") {
     throw new Error(
-      
       "Type error: Invalid type for malloc size. Expected literal, got " +
         sizeArg.value.nodeType
     );
@@ -101,7 +106,7 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
   if (sizeArg.value.literal.nodeType !== "integer") {
     throw new Error(
       "Type error: Invalid type for malloc size. Expected int, got " +
-      sizeArg.value.literal.nodeType
+        sizeArg.value.literal.nodeType
     );
   }
 
@@ -120,7 +125,7 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
   if (size > sizeOfLargest - 2 || size == 0) {
     // Out of memory
     return {
-      nodeType: "runtimeValue",
+      nodeType: "untypedRuntimeValue",
       value: {
         nodeType: "literal",
         literal: {
@@ -136,7 +141,7 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
   const allocateAt = (
     i: number,
     updateNextFitPointer: boolean = false
-  ): RuntimeValueNode => {
+  ): UntypedRuntimeValueNode => {
     const hasPrevious = i > 0;
     const hasNext = i + 1 < freeList.length;
 
@@ -200,7 +205,7 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
     }
 
     return {
-      nodeType: "runtimeValue",
+      nodeType: "untypedRuntimeValue",
       value: {
         nodeType: "literal",
         literal: {
@@ -279,7 +284,7 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
 
   // If we get here, we didn't find a suitable block
   return {
-    nodeType: "runtimeValue",
+    nodeType: "untypedRuntimeValue",
     value: {
       nodeType: "literal",
       literal: {
@@ -290,21 +295,22 @@ const mallocImpl = (args: RuntimeValueNode[]): RuntimeValueNode => {
   };
 };
 
-const freeImpl = (args: RuntimeValueNode[]): VoidNode => {
+const freeImpl = (
+  args: (UntypedRuntimeValueNode | TypedRuntimeValueNode)[]
+): VoidNode => {
   const ptrArg = args[0];
 
-  if (ptrArg.nodeType !== "runtimeValue") {
-    throw new Error(
-      "Type error: Invalid type for free pointer. Expected runtimeValue, got " +
-        ptrArg.nodeType
-    );
-  }
-
-  const addressValue = coerce(ptrArg, {
-    nodeType: "type",
-    type: "void",
-    isPointer: true,
-  });
+  const addressValue = coerce(
+    {
+      nodeType: "untypedRuntimeValue",
+      value: ptrArg.value,
+    },
+    {
+      nodeType: "type",
+      type: "void",
+      isPointer: true,
+    }
+  );
 
   if (addressValue.value.nodeType !== "literal") {
     throw new Error("Internal error (free()): Bad output from coerce()");

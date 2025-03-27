@@ -1,5 +1,5 @@
 import { LiteralNode, TypeNode } from "../grammar_output_validator";
-import { RuntimeValueNode, TypedRuntimeValueNode } from "./engine";
+import { UntypedRuntimeValueNode, TypedRuntimeValueNode } from "./engine";
 
 const coerceLiteralToDouble = (value: LiteralNode): LiteralNode => {
   if (value.literal.nodeType === "double") {
@@ -84,7 +84,10 @@ const coerceLiteralToString = (value: LiteralNode): LiteralNode => {
   }
 };
 
-const coerce = (value: RuntimeValueNode, type: TypeNode): TypedRuntimeValueNode => {
+const coerce = (
+  value: UntypedRuntimeValueNode,
+  type: TypeNode
+): TypedRuntimeValueNode => {
   if (value.value.nodeType !== "literal") {
     throw Error(
       `Internal error: coerce: Unexpected value node with type: "${value.value.nodeType}".`

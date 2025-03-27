@@ -16,6 +16,7 @@ import {
   NEXT_FIT,
   WORST_FIT,
 } from "./malloc_impl";
+import { bytesToNum, numToBytes } from "./num_convert";
 import {
   coerceOperatorDivide,
   coerceOperatorMinus,
@@ -37,12 +38,14 @@ type NativeFunctionDefinitionNode = {
   // in function calls from the grammar side, and nowhere else except casts and
   // declarations.
   arguments: (DeclarationNode | TypeNode)[];
-  body: (args: (RuntimeValueNode | TypeNode)[]) => RuntimeValueNode | VoidNode;
+  body: (
+    args: (UntypedRuntimeValueNode | TypedRuntimeValueNode | TypeNode)[]
+  ) => UntypedRuntimeValueNode | TypedRuntimeValueNode | VoidNode;
 };
 
 // Represents a raw runtime value. All integer types are just "integer" here.
-type RuntimeValueNode = {
-  nodeType: "runtimeValue";
+type UntypedRuntimeValueNode = {
+  nodeType: "untypedRuntimeValue";
   value: LiteralNode | NativeFunctionDefinitionNode;
 };
 
@@ -84,13 +87,15 @@ class Engine {
             },
           },
         ],
-        body: (args: (RuntimeValueNode | TypeNode)[]) => {
+        body: (
+          args: (UntypedRuntimeValueNode | TypedRuntimeValueNode | TypeNode)[]
+        ) => {
           if (args.some((arg) => arg.nodeType === "type")) {
             throw new Error(`Runtime error: Cannot call malloc with a type`);
           }
 
           return mallocImpl(
-            args.filter((arg) => arg.nodeType === "runtimeValue")
+            args.filter((arg) => arg.nodeType === "untypedRuntimeValue")
           );
         },
       },
@@ -128,7 +133,11 @@ class Engine {
           }
 
           return freeImpl(
-            args.filter((arg) => arg.nodeType === "runtimeValue")
+            args.filter(
+              (arg) =>
+                arg.nodeType === "untypedRuntimeValue" ||
+                arg.nodeType === "typedRuntimeValue"
+            )
           );
         },
       },
@@ -177,7 +186,9 @@ class Engine {
             },
           },
         ],
-        body: (args: (RuntimeValueNode | TypeNode)[]) => {
+        body: (
+          args: (UntypedRuntimeValueNode | TypedRuntimeValueNode | TypeNode)[]
+        ) => {
           if (args[0].nodeType === "type") {
             throw new Error(
               `Runtime error: Cannot call setDisplayBase with a type`
@@ -227,7 +238,9 @@ class Engine {
             isPointer: false,
           },
         ],
-        body: (args: (RuntimeValueNode | TypeNode)[]) => {
+        body: (
+          args: (UntypedRuntimeValueNode | TypedRuntimeValueNode | TypeNode)[]
+        ) => {
           if (args.length !== 1) {
             throw new Error(
               `Runtime error: Expected 1 argument for sizeof, but got ${args.length}.`
@@ -258,8 +271,8 @@ class Engine {
             size = 4;
           }
 
-          const returnValue: RuntimeValueNode = {
-            nodeType: "runtimeValue",
+          const returnValue: UntypedRuntimeValueNode = {
+            nodeType: "untypedRuntimeValue",
             value: {
               nodeType: "literal",
               literal: {
@@ -413,7 +426,9 @@ class Engine {
             },
           },
         ],
-        body: (args: (RuntimeValueNode | TypeNode)[]) => {
+        body: (
+          args: (UntypedRuntimeValueNode | TypedRuntimeValueNode | TypeNode)[]
+        ) => {
           if (args[0].nodeType === "type") {
             throw new Error(
               `Runtime error: Cannot call setMemoryAllocationStrategy with a type`
@@ -467,10 +482,10 @@ class Engine {
   // statement evaluates to a value, otherwise returns a void node.
   evaluate(
     statement: StatementNode
-  ): RuntimeValueNode | TypedRuntimeValueNode | VoidNode {
+  ): UntypedRuntimeValueNode | TypedRuntimeValueNode | VoidNode {
     if (statement.nodeType === "literal") {
       return {
-        nodeType: "runtimeValue",
+        nodeType: "untypedRuntimeValue",
         value: statement,
       };
     } else if (statement.nodeType === "operator") {
@@ -514,7 +529,7 @@ class Engine {
       }
 
       return {
-        nodeType: "runtimeValue",
+        nodeType: "untypedRuntimeValue",
         value: literal,
       };
     } else if (statement.nodeType === "cast") {
@@ -528,7 +543,7 @@ class Engine {
 
       return coerce(
         {
-          nodeType: "runtimeValue",
+          nodeType: "untypedRuntimeValue",
           value: result.value,
         },
         statement.type
@@ -557,7 +572,7 @@ class Engine {
       } else {
         this.globalScope[statement.declaration.identifier.identifier] = coerce(
           {
-            nodeType: "runtimeValue",
+            nodeType: "untypedRuntimeValue",
             value: {
               nodeType: "literal",
               literal: {
@@ -582,7 +597,9 @@ class Engine {
 
       return value;
     } else if (statement.nodeType === "assignment") {
-      let address: number | undefined;
+      let memWriteInfo:
+        | { address: number; bits: 8 | 16 | 32 | 64; signed: boolean }
+        | undefined;
 
       if (statement.left.nodeType === "declaration") {
         // If the left side is a declaration, evaluate it first
@@ -594,16 +611,48 @@ class Engine {
           throw new Error(`Runtime error: Cannot dereference void value.`);
         }
 
-        if (runtimeValue.nodeType === "runtimeValue") {
+        if (runtimeValue.nodeType === "untypedRuntimeValue") {
           throw new Error(`Cannot dereference literal value.`);
         }
 
         // If the left side is a dereference, store the memory address for later
-        address = this.getDereferenceAddress(runtimeValue);
+        const address = this.getDereferenceAddress(runtimeValue);
 
         if (address < 0 || address >= state.heap.length) {
           throw new Error(
             `Runtime error: Address ${address} is outside of the addressable memory range.`
+          );
+        }
+
+        const type = runtimeValue.type.type;
+
+        if (type === "uint8_t" || type === "int8_t") {
+          memWriteInfo = {
+            address,
+            bits: 8,
+            signed: !type.startsWith("u"),
+          };
+        } else if (type === "uint16_t" || type === "int16_t") {
+          memWriteInfo = {
+            address,
+            bits: 16,
+            signed: !type.startsWith("u"),
+          };
+        } else if (type === "uint32_t" || type === "int32_t") {
+          memWriteInfo = {
+            address,
+            bits: 32,
+            signed: !type.startsWith("u"),
+          };
+        } else if (type === "uint64_t" || type === "int64_t") {
+          memWriteInfo = {
+            address,
+            bits: 64,
+            signed: !type.startsWith("u"),
+          };
+        } else {
+          throw new Error(
+            `Internal error: Unexpected pointer type ${runtimeValue.type.type}.`
           );
         }
       }
@@ -617,10 +666,10 @@ class Engine {
 
       let scopeItem: TypedRuntimeValueNode;
 
-      if (address !== undefined) {
+      if (memWriteInfo !== undefined) {
         const coerced = coerce(
           {
-            nodeType: "runtimeValue",
+            nodeType: "untypedRuntimeValue",
             value: value.value,
           },
           {
@@ -641,12 +690,13 @@ class Engine {
 
         const heapValueRaw = coerced.value.literal.value;
 
-        if (heapValueRaw < 0) {
-          const value = Math.abs(heapValueRaw) % 256;
-          state.heap[address] = 256 - value;
-        } else {
-          state.heap[address] = heapValueRaw % 256;
-        }
+        const bytes = numToBytes(
+          heapValueRaw,
+          memWriteInfo.bits,
+          memWriteInfo.signed
+        );
+
+        this.writeToHeap(memWriteInfo.address, bytes);
 
         return coerced;
       }
@@ -654,7 +704,7 @@ class Engine {
       else if (statement.left.nodeType === "identifier") {
         scopeItem = coerce(
           {
-            nodeType: "runtimeValue",
+            nodeType: "untypedRuntimeValue",
             value: value.value,
           },
           this.globalScope[statement.left.identifier].type
@@ -663,7 +713,7 @@ class Engine {
       } else if (statement.left.nodeType === "declaration") {
         scopeItem = coerce(
           {
-            nodeType: "runtimeValue",
+            nodeType: "untypedRuntimeValue",
             value: value.value,
           },
           statement.left.declaration.type
@@ -692,7 +742,10 @@ class Engine {
         const args = statement.arguments
           .map((arg) => (arg.nodeType === "type" ? arg : this.evaluate(arg)))
           .filter(
-            (arg) => arg.nodeType === "runtimeValue" || arg.nodeType === "type"
+            (arg) =>
+              arg.nodeType === "typedRuntimeValue" ||
+              arg.nodeType === "untypedRuntimeValue" ||
+              arg.nodeType === "type"
           );
 
         // Validate argument count
@@ -716,7 +769,8 @@ class Engine {
 
           if (
             funcArg.nodeType === "type" &&
-            inputArg.nodeType === "runtimeValue"
+            (inputArg.nodeType === "untypedRuntimeValue" ||
+              inputArg.nodeType === "typedRuntimeValue")
           ) {
             throw new Error(
               `Type error: Expected argument ${i} to be of type ${funcArg.type}, but got a runtime value.`
@@ -734,7 +788,8 @@ class Engine {
 
           if (
             funcArg.nodeType !== "declaration" ||
-            inputArg.nodeType !== "runtimeValue"
+            (inputArg.nodeType !== "untypedRuntimeValue" &&
+              inputArg.nodeType !== "typedRuntimeValue")
           ) {
             throw new Error(
               `Internal error: Unexpected argument node type for function ${statement.functionName.identifier}.`
@@ -764,8 +819,7 @@ class Engine {
         throw new Error(`Runtime error: Cannot dereference void value.`);
       }
 
-      if (runtimeValue.nodeType === "runtimeValue") {
-        // TODO: should change this to "untypedRuntimeValue"
+      if (runtimeValue.nodeType === "untypedRuntimeValue") {
         throw new Error(`Cannot dereference literal value.`);
       }
 
@@ -778,23 +832,32 @@ class Engine {
       }
 
       let bytes: number[] = [];
+      let bits: 8 | 16 | 32 | 64 = 8;
 
-      if (runtimeValue.type.type === "uint8_t") {
+      const type = runtimeValue.type.type;
+
+      if (type === "uint8_t" || type === "int8_t") {
         bytes = this.readFromHeap(address, 1);
-      } else if (runtimeValue.type.type === "uint16_t") {
+        bits = 8;
+      } else if (type === "uint16_t" || type === "int16_t") {
         bytes = this.readFromHeap(address, 2);
-      } else if (runtimeValue.type.type === "uint32_t") {
+        bits = 16;
+      } else if (type === "uint32_t" || type === "int32_t") {
         bytes = this.readFromHeap(address, 4);
-      } else if (runtimeValue.type.type === "uint64_t") {
+        bits = 32;
+      } else if (type === "uint64_t" || type === "int64_t") {
         bytes = this.readFromHeap(address, 8);
+        bits = 64;
       } else {
         throw new Error(
           `Internal error: Unexpected pointer type ${runtimeValue.type.type}.`
         );
       }
 
+      const signed = !type.startsWith("u");
+
       return {
-        nodeType: "runtimeValue",
+        nodeType: "untypedRuntimeValue",
         value: {
           nodeType: "literal",
           literal: {
@@ -802,10 +865,7 @@ class Engine {
               runtimeValue.type.type === "uint8_t" ? "integer" : "double",
             // TODO: This has to be reworked as it produces negative integers for unsigned types
             // also we really need to be able to distinguish signed and unsigned
-            value: bytes.reduce(
-              (acc, byte, index) => acc + (byte << (index * 8)),
-              0
-            ),
+            value: bytesToNum(bytes, bits, signed),
           },
         },
       };
@@ -856,9 +916,21 @@ class Engine {
 
     return state.heap.slice(address, address + numBytes);
   }
+
+  private writeToHeap(address: number, bytes: number[]): void {
+    if (address < 0 || address + bytes.length > state.heap.length) {
+      throw new Error(
+        `Segmentation fault: Attempted to write outside of the heap bounds.`
+      );
+    }
+
+    for (let i = 0; i < bytes.length; i++) {
+      state.heap[address + i] = bytes[i];
+    }
+  }
 }
 
 const engine = new Engine();
 
 export default engine;
-export type { Scope, RuntimeValueNode, VoidNode, TypedRuntimeValueNode };
+export type { Scope, UntypedRuntimeValueNode, VoidNode, TypedRuntimeValueNode };
