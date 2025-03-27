@@ -16,7 +16,12 @@ import {
   NEXT_FIT,
   WORST_FIT,
 } from "./malloc_impl";
-import { bytesToNum, numToBytes } from "./num_convert";
+import {
+  bytesToNum,
+  bytesToNumFloat,
+  numToBytes,
+  numToBytesFloat,
+} from "./num_convert";
 import {
   coerceOperatorDivide,
   coerceOperatorMinus,
@@ -598,7 +603,13 @@ class Engine {
       return value;
     } else if (statement.nodeType === "assignment") {
       let memWriteInfo:
-        | { address: number; bits: 8 | 16 | 32 | 64; signed: boolean }
+        | {
+            type: "integer";
+            address: number;
+            bits: 8 | 16 | 32 | 64;
+            signed: boolean;
+          }
+        | { type: "float"; address: number; double: boolean }
         | undefined;
 
       if (statement.left.nodeType === "declaration") {
@@ -628,27 +639,37 @@ class Engine {
 
         if (type === "uint8_t" || type === "int8_t") {
           memWriteInfo = {
+            type: "integer",
             address,
             bits: 8,
             signed: !type.startsWith("u"),
           };
         } else if (type === "uint16_t" || type === "int16_t") {
           memWriteInfo = {
+            type: "integer",
             address,
             bits: 16,
             signed: !type.startsWith("u"),
           };
         } else if (type === "uint32_t" || type === "int32_t") {
           memWriteInfo = {
+            type: "integer",
             address,
             bits: 32,
             signed: !type.startsWith("u"),
           };
         } else if (type === "uint64_t" || type === "int64_t") {
           memWriteInfo = {
+            type: "integer",
             address,
             bits: 64,
             signed: !type.startsWith("u"),
+          };
+        } else if (type === "float" || type === "double") {
+          memWriteInfo = {
+            type: "float",
+            address,
+            double: type === "double",
           };
         } else {
           throw new Error(
@@ -733,27 +754,37 @@ class Engine {
 
         if (type === "uint8_t" || type === "int8_t") {
           memWriteInfo = {
+            type: "integer",
             address,
             bits: 8,
             signed: !type.startsWith("u"),
           };
         } else if (type === "uint16_t" || type === "int16_t") {
           memWriteInfo = {
+            type: "integer",
             address,
             bits: 16,
             signed: !type.startsWith("u"),
           };
         } else if (type === "uint32_t" || type === "int32_t") {
           memWriteInfo = {
+            type: "integer",
             address,
             bits: 32,
             signed: !type.startsWith("u"),
           };
         } else if (type === "uint64_t" || type === "int64_t") {
           memWriteInfo = {
+            type: "integer",
             address,
             bits: 64,
             signed: !type.startsWith("u"),
+          };
+        } else if (type === "float" || type === "double") {
+          memWriteInfo = {
+            type: "float",
+            address,
+            double: type === "double",
           };
         } else {
           throw new Error(`Internal error: Unexpected pointer type ${type}.`);
@@ -777,7 +808,7 @@ class Engine {
           },
           {
             nodeType: "type",
-            type: "uint32_t",
+            type: memWriteInfo.type === "float" ? "double" : "uint64_t",
             isPointer: false,
           }
         );
@@ -785,19 +816,21 @@ class Engine {
           throw new Error(
             `Internal error: Expected coerced value to be of type "literal", but got ${coerced.value.nodeType}.`
           );
-        } else if (coerced.value.literal.nodeType !== "integer") {
+        } else if (
+          coerced.value.literal.nodeType !== "integer" &&
+          coerced.value.literal.nodeType !== "double"
+        ) {
           throw new Error(
-            `Internal error: Expected coerced value to be of type "uint32_t", but got ${coerced.value.literal.nodeType}.`
+            `Internal error: Expected coerced value to be of type "integer" or "double", but got ${coerced.value.literal.nodeType}.`
           );
         }
 
         const heapValueRaw = coerced.value.literal.value;
 
-        const bytes = numToBytes(
-          heapValueRaw,
-          memWriteInfo.bits,
-          memWriteInfo.signed
-        );
+        const bytes =
+          memWriteInfo.type === "integer"
+            ? numToBytes(heapValueRaw, memWriteInfo.bits, memWriteInfo.signed)
+            : numToBytesFloat(heapValueRaw, memWriteInfo.double);
 
         this.writeToHeap(memWriteInfo.address, bytes);
 
@@ -939,6 +972,22 @@ class Engine {
 
       const type = runtimeValue.type.type;
 
+      if (type === "double" || type === "float") {
+        return {
+          nodeType: "untypedRuntimeValue",
+          value: {
+            nodeType: "literal",
+            literal: {
+              nodeType: "double",
+              value: bytesToNumFloat(
+                this.readFromHeap(address, 8),
+                type === "double"
+              ),
+            },
+          },
+        };
+      }
+
       if (type === "uint8_t" || type === "int8_t") {
         bytes = this.readFromHeap(address, 1);
         bits = 8;
@@ -964,10 +1013,7 @@ class Engine {
         value: {
           nodeType: "literal",
           literal: {
-            nodeType:
-              runtimeValue.type.type === "uint8_t" ? "integer" : "double",
-            // TODO: This has to be reworked as it produces negative integers for unsigned types
-            // also we really need to be able to distinguish signed and unsigned
+            nodeType: "integer",
             value: bytesToNum(bytes, bits, signed),
           },
         },
@@ -1063,8 +1109,7 @@ class Engine {
         value: {
           nodeType: "literal",
           literal: {
-            nodeType:
-              pointerStart.type.type === "uint8_t" ? "integer" : "double",
+            nodeType: "integer",
             value: bytesToNum(bytes, bits, signed),
           },
         },

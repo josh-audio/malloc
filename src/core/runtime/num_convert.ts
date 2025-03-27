@@ -57,6 +57,14 @@ const numToBytes = (
   return Array.from(new Uint8Array(typedArr.buffer));
 };
 
+const numToBytesFloat = (num: number, double: boolean): number[] => {
+  const typedArr = double ? new Float64Array(1) : new Float32Array(1);
+
+  typedArr[0] = num;
+
+  return Array.from(new Uint8Array(typedArr.buffer));
+};
+
 const bytesToNum64 = (bytes: number[], isSigned: boolean): number => {
   const typedArr = isSigned
     ? new BigInt64Array(new Uint8Array(bytes).buffer)
@@ -113,4 +121,12 @@ const bytesToNum = (
   return typedArr[0];
 };
 
-export { numToBytes, bytesToNum };
+const bytesToNumFloat = (bytes: number[], double: boolean): number => {
+  const typedArr = double
+    ? new Float64Array(new Uint8Array(bytes).buffer)
+    : new Float32Array(new Uint8Array(bytes).buffer);
+
+  return typedArr[0];
+};
+
+export { numToBytes, bytesToNum, numToBytesFloat, bytesToNumFloat };

@@ -119,7 +119,7 @@ dereference -> "*" _ statement {%
   }
 %}
 
-operator -> (literal | identifier | function_call | parenthesis) _ [+\-*\/] _ (literal | identifier | function_call | parenthesis) {%
+operator -> (literal | identifier | function_call | parenthesis | dereference | array_access) _ [+\-*\/] _ (literal | identifier | function_call | parenthesis | dereference | array_access) {%
   function(data) {
     return {
       nodeType: 'operator',
@@ -155,7 +155,7 @@ type_pointer -> ( type_raw _ "*" ) {%
 %}
 
 type_raw -> (
-  "double"
+  "double" | "float"
   | "string"
   | "uint64_t" | "unsigned" _ "long"
   | "uint32_t" | "unsigned" _ "int"

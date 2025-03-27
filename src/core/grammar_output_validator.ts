@@ -34,6 +34,7 @@ const typeSchema = z.object({
     z.literal("int16_t"),
     z.literal("int8_t"),
     z.literal("double"),
+    z.literal("float"),
     z.literal("string"),
     z.literal("void"),
 
@@ -146,20 +147,36 @@ const operatorSchema: ZodType<OperatorNode> = z.lazy(() =>
       identifierSchema,
       functionCallSchema,
       parenthesisSchema,
+      dereferenceSchema,
+      arrayAccessSchema,
     ]),
     right: z.union([
       literalSchema,
       identifierSchema,
       functionCallSchema,
       parenthesisSchema,
+      dereferenceSchema,
+      arrayAccessSchema,
     ]),
   })
 );
 type OperatorNode = {
   nodeType: "operator";
   operator: "+" | "-" | "*" | "/";
-  left: LiteralNode | IdentifierNode | FunctionCallNode | ParenthesisNode;
-  right: LiteralNode | IdentifierNode | FunctionCallNode | ParenthesisNode;
+  left:
+    | LiteralNode
+    | IdentifierNode
+    | FunctionCallNode
+    | ParenthesisNode
+    | DereferenceNode
+    | ArrayAccessNode;
+  right:
+    | LiteralNode
+    | IdentifierNode
+    | FunctionCallNode
+    | ParenthesisNode
+    | DereferenceNode
+    | ArrayAccessNode;
 };
 
 const parenthesisSchema: ZodType<ParenthesisNode> = z.lazy(() =>
