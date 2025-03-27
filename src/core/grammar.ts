@@ -33,7 +33,7 @@ const grammar: nearley.CompiledRules = {
     { name: "statement$subexpression$1", symbols: ["function_call"] },
     { name: "statement$subexpression$1", symbols: ["declaration"] },
     { name: "statement$subexpression$1", symbols: ["cast"] },
-    { name: "statement$subexpression$1", symbols: ["array_index"] },
+    { name: "statement$subexpression$1", symbols: ["array_access"] },
     { name: "statement$subexpression$1", symbols: ["operator"] },
     { name: "statement$subexpression$1", symbols: ["parenthesis"] },
     { name: "statement$subexpression$1", symbols: ["dereference"] },
@@ -65,7 +65,7 @@ const grammar: nearley.CompiledRules = {
     },
     { name: "assignment$subexpression$1", symbols: ["declaration"] },
     { name: "assignment$subexpression$1", symbols: ["identifier"] },
-    { name: "assignment$subexpression$1", symbols: ["array_index"] },
+    { name: "assignment$subexpression$1", symbols: ["array_access"] },
     { name: "assignment$subexpression$1", symbols: ["dereference"] },
     {
       name: "assignment",
@@ -165,7 +165,7 @@ const grammar: nearley.CompiledRules = {
       },
     },
     {
-      name: "array_index",
+      name: "array_access",
       symbols: [
         "identifier",
         "_",
@@ -177,7 +177,7 @@ const grammar: nearley.CompiledRules = {
       ],
       postprocess: function (data) {
         return {
-          nodeType: "arrayIndex",
+          nodeType: "arrayAccess",
           identifier: data[0],
           value: data[4],
         };

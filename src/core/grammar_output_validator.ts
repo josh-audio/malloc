@@ -77,15 +77,15 @@ type FunctionCallNode = {
 };
 
 // This is unnecessarily specific - should generalize it to parse into an operator
-const arrayIndexSchema: ZodType<ArrayIndexNode> = z.lazy(() =>
+const arrayAccessSchema: ZodType<ArrayAccessNode> = z.lazy(() =>
   z.object({
-    nodeType: z.literal("arrayIndex"),
+    nodeType: z.literal("arrayAccess"),
     identifier: identifierSchema,
     value: statementSchema,
   })
 );
-type ArrayIndexNode = {
-  nodeType: "arrayIndex";
+type ArrayAccessNode = {
+  nodeType: "arrayAccess";
   identifier: IdentifierNode;
   value: StatementNode;
 };
@@ -96,7 +96,7 @@ const assignmentSchema: ZodType<AssignmentNode> = z.lazy(() =>
     left: z.union([
       declarationSchema,
       identifierSchema,
-      arrayIndexSchema,
+      arrayAccessSchema,
       dereferenceSchema,
     ]),
     right: statementSchema,
@@ -104,7 +104,7 @@ const assignmentSchema: ZodType<AssignmentNode> = z.lazy(() =>
 );
 type AssignmentNode = {
   nodeType: "assignment";
-  left: DeclarationNode | IdentifierNode | ArrayIndexNode | DereferenceNode;
+  left: DeclarationNode | IdentifierNode | ArrayAccessNode | DereferenceNode;
   right: StatementNode;
 };
 
@@ -179,7 +179,7 @@ const statementSchema: ZodType<StatementNode> = z.lazy(() =>
     identifierSchema,
     declarationSchema,
     functionCallSchema,
-    arrayIndexSchema,
+    arrayAccessSchema,
     assignmentSchema,
     castSchema,
     operatorSchema,
@@ -193,7 +193,7 @@ type StatementNode =
   | IdentifierNode
   | DeclarationNode
   | FunctionCallNode
-  | ArrayIndexNode
+  | ArrayAccessNode
   | AssignmentNode
   | CastNode
   | OperatorNode
@@ -208,7 +208,7 @@ export type {
   TypeNode,
   DeclarationNode,
   FunctionCallNode,
-  ArrayIndexNode,
+  ArrayAccessNode,
   AssignmentNode,
   CastNode,
   OperatorNode,

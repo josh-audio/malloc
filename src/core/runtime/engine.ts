@@ -655,6 +655,109 @@ class Engine {
             `Internal error: Unexpected pointer type ${runtimeValue.type.type}.`
           );
         }
+      } else if (statement.left.nodeType === "arrayAccess") {
+        const pointerStart = this.evaluate(statement.left.identifier);
+
+        if (pointerStart.nodeType === "void") {
+          throw new Error(`Runtime error: Cannot dereference void value.`);
+        }
+
+        if (pointerStart.nodeType === "untypedRuntimeValue") {
+          throw new Error(`Runtime error: Cannot dereference literal value.`);
+        }
+
+        if (pointerStart.value.nodeType !== "literal") {
+          throw new Error(
+            `Internal error: Expected pointer start to be of type "literal", but got ${pointerStart.value.nodeType}.`
+          );
+        }
+
+        const pointerStartValue = pointerStart.value.literal.value;
+
+        if (typeof pointerStartValue !== "number") {
+          throw new Error(
+            `Internal error: Expected pointer start value to be a number, but got ${typeof pointerStartValue}.`
+          );
+        }
+
+        const pointerOffset = this.evaluate(statement.left.value);
+
+        if (pointerOffset.nodeType === "void") {
+          throw new Error(`Runtime error: Cannot dereference void value.`);
+        }
+
+        if (pointerOffset.value.nodeType !== "literal") {
+          throw new Error(
+            `Internal error: Expected pointer offset to be of type "literal", but got ${pointerOffset.value.nodeType}.`
+          );
+        }
+
+        const pointerOffsetValue = pointerOffset.value.literal.value;
+
+        if (typeof pointerOffsetValue !== "number") {
+          throw new Error(
+            `Internal error: Expected pointer offset value to be a number, but got ${typeof pointerOffsetValue}.`
+          );
+        }
+
+        const type = pointerStart.type.type;
+
+        let offsetMultiple = 1;
+
+        if (type.includes("16")) {
+          offsetMultiple = 2;
+        } else if (type.includes("32")) {
+          offsetMultiple = 4;
+        } else if (type.includes("64")) {
+          offsetMultiple = 8;
+        }
+
+        // If the left side is a dereference, store the memory address for later
+        const address = this.getDereferenceAddress({
+          nodeType: "typedRuntimeValue",
+          type: pointerStart.type,
+          value: {
+            nodeType: "literal",
+            literal: {
+              nodeType: "integer",
+              value: pointerStartValue + pointerOffsetValue * offsetMultiple,
+            },
+          },
+        });
+
+        if (address < 0 || address >= state.heap.length) {
+          throw new Error(
+            `Runtime error: Address ${address} is outside of the addressable memory range.`
+          );
+        }
+
+        if (type === "uint8_t" || type === "int8_t") {
+          memWriteInfo = {
+            address,
+            bits: 8,
+            signed: !type.startsWith("u"),
+          };
+        } else if (type === "uint16_t" || type === "int16_t") {
+          memWriteInfo = {
+            address,
+            bits: 16,
+            signed: !type.startsWith("u"),
+          };
+        } else if (type === "uint32_t" || type === "int32_t") {
+          memWriteInfo = {
+            address,
+            bits: 32,
+            signed: !type.startsWith("u"),
+          };
+        } else if (type === "uint64_t" || type === "int64_t") {
+          memWriteInfo = {
+            address,
+            bits: 64,
+            signed: !type.startsWith("u"),
+          };
+        } else {
+          throw new Error(`Internal error: Unexpected pointer type ${type}.`);
+        }
       }
 
       // Evaluate the right-hand side of the assignment
@@ -871,11 +974,108 @@ class Engine {
       };
     } else if (statement.nodeType === "type") {
       return { nodeType: "void" };
-    }
+    } else if (statement.nodeType === "arrayAccess") {
+      const pointerStart = this.evaluate(statement.identifier);
 
-    throw Error(
-      `Internal error: Unexpected statement node type: ${statement.nodeType}`
-    );
+      if (pointerStart.nodeType === "void") {
+        throw new Error(`Runtime error: Cannot dereference void value.`);
+      }
+
+      if (pointerStart.nodeType === "untypedRuntimeValue") {
+        throw new Error(`Runtime error: Cannot dereference literal value.`);
+      }
+
+      if (pointerStart.value.nodeType !== "literal") {
+        throw new Error(
+          `Internal error: Expected pointer start to be of type "literal", but got ${pointerStart.value.nodeType}.`
+        );
+      }
+
+      const pointerStartValue = pointerStart.value.literal.value;
+
+      if (typeof pointerStartValue !== "number") {
+        throw new Error(
+          `Internal error: Expected pointer start value to be a number, but got ${typeof pointerStartValue}.`
+        );
+      }
+
+      const pointerOffset = this.evaluate(statement.value);
+
+      if (pointerOffset.nodeType === "void") {
+        throw new Error(`Runtime error: Cannot dereference void value.`);
+      }
+
+      if (pointerOffset.value.nodeType !== "literal") {
+        throw new Error(
+          `Internal error: Expected pointer offset to be of type "literal", but got ${pointerOffset.value.nodeType}.`
+        );
+      }
+
+      const pointerOffsetValue = pointerOffset.value.literal.value;
+
+      if (typeof pointerOffsetValue !== "number") {
+        throw new Error(
+          `Internal error: Expected pointer offset value to be a number, but got ${typeof pointerOffsetValue}.`
+        );
+      }
+
+      const type = pointerStart.type.type;
+
+      let offsetMultiple = 1;
+
+      if (type.includes("16")) {
+        offsetMultiple = 2;
+      } else if (type.includes("32")) {
+        offsetMultiple = 4;
+      } else if (type.includes("64")) {
+        offsetMultiple = 8;
+      }
+
+      const address = pointerStartValue + pointerOffsetValue * offsetMultiple;
+
+      if (address < 0 || address >= state.heap.length) {
+        throw new Error(
+          `Runtime error: Address ${address} is outside of the addressable memory range.`
+        );
+      }
+
+      let bytes: number[] = [];
+      let bits: 8 | 16 | 32 | 64 = 8;
+
+      if (type === "uint8_t" || type === "int8_t") {
+        bytes = this.readFromHeap(address, 1);
+        bits = 8;
+      } else if (type === "uint16_t" || type === "int16_t") {
+        bytes = this.readFromHeap(address, 2);
+        bits = 16;
+      } else if (type === "uint32_t" || type === "int32_t") {
+        bytes = this.readFromHeap(address, 4);
+        bits = 32;
+      } else if (type === "uint64_t" || type === "int64_t") {
+        bytes = this.readFromHeap(address, 8);
+        bits = 64;
+      }
+
+      const signed = !type.startsWith("u");
+
+      return {
+        nodeType: "untypedRuntimeValue",
+        value: {
+          nodeType: "literal",
+          literal: {
+            nodeType:
+              pointerStart.type.type === "uint8_t" ? "integer" : "double",
+            value: bytesToNum(bytes, bits, signed),
+          },
+        },
+      };
+    } else {
+      const nodeType = (statement as StatementNode).nodeType;
+
+      throw Error(
+        `Internal error: Unexpected statement node type ${nodeType}.`
+      );
+    }
   }
 
   private getDereferenceAddress(value: TypedRuntimeValueNode): number {

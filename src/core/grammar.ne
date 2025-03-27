@@ -11,7 +11,7 @@ statement -> (
   | function_call 
   | declaration 
   | cast 
-  | array_index 
+  | array_access 
   | operator 
   | parenthesis
   | dereference
@@ -31,7 +31,7 @@ identifier -> [a-zA-Z_] [a-zA-Z0-9_]:* {%
   }
 %}
 
-assignment -> (declaration | identifier | array_index | dereference) _ "=" _ statement {%
+assignment -> (declaration | identifier | array_access | dereference) _ "=" _ statement {%
   function(data) {
     return {
       nodeType: 'assignment',
@@ -90,10 +90,10 @@ array_declaration -> type _ identifier _ "[" _ int _ "]" {%
   }
 %}
 
-array_index -> identifier _ "[" _ statement _ "]" {%
+array_access -> identifier _ "[" _ statement _ "]" {%
   function(data) {
     return {
-      nodeType: 'arrayIndex',
+      nodeType: 'arrayAccess',
       identifier: data[0],
       value: data[4]
     }
