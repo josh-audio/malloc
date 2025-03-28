@@ -35,9 +35,33 @@ const coerceLiteralToU64 = (value: LiteralNode): LiteralNode => {
   return coerceLiteralToInt(value, "uint64_t");
 };
 
+const coerceLiteralToI8 = (value: LiteralNode): LiteralNode => {
+  return coerceLiteralToInt(value, "int8_t");
+};
+
+const coerceLiteralToI16 = (value: LiteralNode): LiteralNode => {
+  return coerceLiteralToInt(value, "int16_t");
+};
+
+const coerceLiteralToI32 = (value: LiteralNode): LiteralNode => {
+  return coerceLiteralToInt(value, "int32_t");
+};
+
+const coerceLiteralToI64 = (value: LiteralNode): LiteralNode => {
+  return coerceLiteralToInt(value, "int64_t");
+};
+
 const coerceLiteralToInt = (
   value: LiteralNode,
-  intType: "uint8_t" | "uint16_t" | "uint32_t" | "uint64_t"
+  intType:
+    | "uint8_t"
+    | "uint16_t"
+    | "uint32_t"
+    | "uint64_t"
+    | "int8_t"
+    | "int16_t"
+    | "int32_t"
+    | "int64_t"
 ): LiteralNode => {
   let mask = null;
   if (intType === "uint8_t") {
@@ -69,7 +93,7 @@ const coerceLiteralToInt = (
     };
   } else {
     throw Error(
-      `Runtime error: Cannot coerce ${value.literal.nodeType} to uint16_t.`
+      `Runtime error: Cannot coerce ${value.literal.nodeType} to ${intType}.`
     );
   }
 };
@@ -118,7 +142,31 @@ const coerce = (
       type: type,
       value: coerceLiteralToU8(value.value),
     };
-  } else if (type.type === "double") {
+  } else if (type.type === "int64_t") {
+    return {
+      nodeType: "typedRuntimeValue",
+      type: type,
+      value: coerceLiteralToI64(value.value),
+    };
+  } else if (type.type === "int32_t") {
+    return {
+      nodeType: "typedRuntimeValue",
+      type: type,
+      value: coerceLiteralToI32(value.value),
+    };
+  } else if (type.type === "int16_t") {
+    return {
+      nodeType: "typedRuntimeValue",
+      type: type,
+      value: coerceLiteralToI16(value.value),
+    };
+  } else if (type.type === "int8_t") {
+    return {
+      nodeType: "typedRuntimeValue",
+      type: type,
+      value: coerceLiteralToI8(value.value),
+    };
+  } else if (type.type === "double" || type.type === "float") {
     return {
       nodeType: "typedRuntimeValue",
       type: type,
@@ -141,8 +189,12 @@ export {
   coerceLiteralToU64,
   coerceLiteralToU32,
   coerceLiteralToU16,
-  coerceLiteralToDouble,
   coerceLiteralToU8,
+  coerceLiteralToI64,
+  coerceLiteralToI32,
+  coerceLiteralToI16,
+  coerceLiteralToI8,
+  coerceLiteralToDouble,
   coerceLiteralToString,
   coerce,
 };
