@@ -64,11 +64,13 @@ const coerceLiteralToInt = (
     | "int64_t"
 ): LiteralNode => {
   let mask = null;
-  if (intType === "uint8_t") {
+
+  // This is crude and won't work for signed to unsigned casts.
+  if (intType === "uint8_t" || intType === "int8_t") {
     mask = 0xff;
-  } else if (intType === "uint16_t") {
+  } else if (intType === "uint16_t" || intType === "int16_t") {
     mask = 0xffff;
-  } else if (intType === "uint32_t") {
+  } else if (intType === "uint32_t" || intType === "int32_t") {
     mask = 0xffffffff;
   }
 
