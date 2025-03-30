@@ -50,6 +50,21 @@ class State {
 
     makeAutoObservable(this);
   }
+
+  // Saves the memory array to the local storage
+  save(key: string): void {
+    localStorage.setItem(key, JSON.stringify(this.heap));
+  }
+
+  // Loads the memory array from the local storage
+  load(key: string): void {
+    const data = localStorage.getItem(key);
+    if (data) {
+      this.heap = JSON.parse(data);
+    } else {
+      throw new Error("No data found in local storage for the given key.");
+    }
+  }
 }
 
 const state = new State();

@@ -493,6 +493,110 @@ class Engine {
         },
       },
     },
+
+    save: {
+      nodeType: "typedRuntimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+        isPointer: false,
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [
+          {
+            nodeType: "declaration",
+            declaration: {
+              nodeType: "singleDeclaration",
+              identifier: {
+                nodeType: "identifier",
+                identifier: "key",
+              },
+              type: {
+                nodeType: "type",
+                type: "string",
+                isPointer: false,
+              },
+            },
+          },
+        ],
+        body: (
+          args: (UntypedRuntimeValueNode | TypedRuntimeValueNode | TypeNode)[]
+        ) => {
+          if (args[0].nodeType === "type") {
+            throw new Error(`Runtime error: Cannot call save with a type`);
+          }
+
+          if (args[0].value.nodeType !== "literal") {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type string, but got ${args[0].value.nodeType}.`
+            );
+          }
+
+          if (args[0].value.literal.nodeType !== "string") {
+            throw new Error(
+              `Internal error: Expected argument 0 to be of type string, but got ${args[0].value.literal.nodeType}.`
+            );
+          }
+
+          const key = args[0].value.literal.value;
+          state.save(key);
+
+          return { nodeType: "void" };
+        },
+      },
+    },
+
+    load: {
+      nodeType: "typedRuntimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+        isPointer: false,
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [
+          {
+            nodeType: "declaration",
+            declaration: {
+              nodeType: "singleDeclaration",
+              identifier: {
+                nodeType: "identifier",
+                identifier: "key",
+              },
+              type: {
+                nodeType: "type",
+                type: "string",
+                isPointer: false,
+              },
+            },
+          },
+        ],
+        body: (args) => {
+          if (args[0].nodeType === "type") {
+            throw new Error(`Runtime error: Cannot call load with a type`);
+          }
+
+          if (args[0].value.nodeType !== "literal") {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type string, but got ${args[0].value.nodeType}.`
+            );
+          }
+
+          if (args[0].value.literal.nodeType !== "string") {
+            throw new Error(
+              `Internal error: Expected argument 0 to be of type string, but got ${args[0].value.literal.nodeType}.`
+            );
+          }
+
+          const key = args[0].value.literal.value;
+          state.load(key);
+
+          return { nodeType: "void" };
+        },
+      },
+    },
   };
 
   // Recursively evaluates the given statement. Returns a literal node if the
