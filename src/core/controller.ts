@@ -100,12 +100,41 @@ class Controller {
 
         // This is a hack to make sure sizeof(int), which is ambiguous, is
         // always parsed as functionCall(type) and not functionCall(identifier)
-        if (validatedList.length > 1 && validatedList.every(item => item.nodeType === "functionCall")) {
-          const withTypeArg = validatedList.find(item => item.arguments[0].nodeType === "type");
+        if (validatedList.length > 1) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const hasSizeOfIdentifier = (node: any) => {
+            if (node.nodeType === "functionCall") {
+              if (node.functionName.identifier === "sizeof") {
+                if (node.arguments.length === 1) {
+                  if (node.arguments[0].nodeType === "identifier") {
+                    return true;
+                  } else {
+                    return false;
+                  }
+                }
+              }
 
-          if (withTypeArg) {
-            validated = withTypeArg;
+              for (const arg of node.arguments) {
+                if (hasSizeOfIdentifier(arg)) {
+                  return true;
+                }
+              }
+
+              return false;
+            } else {
+              for (const key in node) {
+                if (typeof node[key] === "object") {
+                  if (hasSizeOfIdentifier(node[key])) {
+                    return true;
+                  }
+                }
+              }
+
+              return false;
+            }
           }
+
+          validated = validatedList.find(result => !hasSizeOfIdentifier(result)) ?? validatedList[0];
         }
 
         const result = engine.evaluate(validated);
