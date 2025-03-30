@@ -84,7 +84,6 @@ const grammar: nearley.CompiledRules = {
         };
       },
     },
-    { name: "function_call$subexpression$1", symbols: ["type"] },
     { name: "function_call$subexpression$1", symbols: ["statement"] },
     { name: "function_call$subexpression$1", symbols: ["_"] },
     {

@@ -41,7 +41,7 @@ assignment -> (declaration | identifier | array_access | dereference) _ "=" _ st
   }
 %}
 
-function_call -> identifier _ "(" _ ( type | statement | _ ) _ ")" {%
+function_call -> identifier _ "(" _ ( statement | _ ) _ ")" {%
   function(data) {
     const arg = data[4][0];
     if (arg?.nodeType === undefined) {

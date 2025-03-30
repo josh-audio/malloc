@@ -272,8 +272,20 @@ class Engine {
 
           let size = 1;
 
-          if (args[0].type === "uint32_t") {
+          if (args[0].type === "uint16_t" || args[0].type === "int16_t") {
+            size = 2;
+          } else if (
+            args[0].type === "uint32_t" ||
+            args[0].type === "int32_t" ||
+            args[0].type === "float"
+          ) {
             size = 4;
+          } else if (
+            args[0].type === "uint64_t" ||
+            args[0].type === "int64_t" ||
+            args[0].type === "double"
+          ) {
+            size = 8;
           }
 
           const returnValue: UntypedRuntimeValueNode = {

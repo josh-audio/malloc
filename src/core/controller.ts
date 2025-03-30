@@ -93,7 +93,20 @@ class Controller {
           throw new Error("Internal error: Unexpected parser output.");
         }
 
-        const validated = statementSchema.parse(parser.results[0]);
+        console.log(parser.results.length);
+
+        const validatedList = parser.results.map(result => statementSchema.parse(result));
+        let validated = validatedList[0];
+
+        // This is a hack to make sure sizeof(int), which is ambiguous, is
+        // always parsed as functionCall(type) and not functionCall(identifier)
+        if (validatedList.length > 1 && validatedList.every(item => item.nodeType === "functionCall")) {
+          const withTypeArg = validatedList.find(item => item.arguments[0].nodeType === "type");
+
+          if (withTypeArg) {
+            validated = withTypeArg;
+          }
+        }
 
         const result = engine.evaluate(validated);
 
