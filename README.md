@@ -48,14 +48,17 @@ char *b = a + 1; // pointer to memory address 0xB
 *a + *b; // -> 15
 ```
 
-Note that all values are unsigned.
-
 Finally memory can be allocated and freed using `malloc()` and `free()`:
 
 ```c
 int *a = malloc(sizeof(int));
 *a = 0xFFFF1234;
 free(a);
+
+double *b = malloc(sizeof(double) * 2);
+b[0] = 1.2;
+b[1] = 2.3;
+free(b);
 ```
 
 ## Interpreter Helpers
