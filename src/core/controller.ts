@@ -93,8 +93,6 @@ class Controller {
           throw new Error("Internal error: Unexpected parser output.");
         }
 
-        console.log(parser.results.length);
-
         const validatedList = parser.results.map(result => statementSchema.parse(result));
         let validated = validatedList[0];
 

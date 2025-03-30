@@ -9,7 +9,7 @@
 - UI
   - Memory addresses are now displayed as small labels above cells, and cells now contain memory values.
   - Added support for displaying memory addresses and values in hex. This can be changed with:
-    ```
+    ```c
     setDisplayBase(10); // base 10
     setDisplayBase(16); // base 16
     ```
