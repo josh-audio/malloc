@@ -192,13 +192,14 @@ class Controller {
     // Write free list entries
     for (const freeListItem of freeList) {
       const err =
-        freeListItem.size < 2 ||
-        freeListItem.startIndex + freeListItem.size > cellList.length;
+        freeListItem.sizeWithHeader < 3 ||
+        freeListItem.ptr - 2 + freeListItem.sizeWithHeader > cellList.length;
 
       let writeCount = 0;
       for (
-        let i = freeListItem.startIndex;
-        i < freeListItem.startIndex + freeListItem.size && i < cellList.length;
+        let i = freeListItem.ptr - 2;
+        i < freeListItem.ptr - 2 + freeListItem.sizeWithHeader &&
+        i < cellList.length;
         i++
       ) {
         cellList[i].isAllocated = false;

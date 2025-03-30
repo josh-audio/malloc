@@ -19,7 +19,7 @@ const initMemory = () => {
       state.heap.push(0);
     } else if (i === 1) {
       // Free list pointer
-      state.heap.push(3);
+      state.heap.push(5);
     } else if (i === 2) {
       // Next fit pointer
       state.heap.push(0);
@@ -36,8 +36,8 @@ const initMemory = () => {
 };
 
 const getFreeList = (): {
-  startIndex: number;
-  size: number;
+  ptr: number;
+  sizeWithHeader: number;
   next: number;
   sizeError?: true;
   nextError?: true;
@@ -50,13 +50,13 @@ const getFreeList = (): {
   let iter = 0;
   while (freeListPointer !== 0) {
     if (iter > 255) {
-      return [{ startIndex: 3, size: 253, next: 0, regionError: true }];
+      return [{ ptr: 5, sizeWithHeader: 253, next: 0, regionError: true }];
     }
 
-    const size = state.heap[freeListPointer];
-    const next = state.heap[freeListPointer + 1];
+    const size = state.heap[freeListPointer - 2];
+    const next = state.heap[freeListPointer - 1];
 
-    freeList.push({ startIndex: freeListPointer, size, next });
+    freeList.push({ ptr: freeListPointer, sizeWithHeader: size, next });
 
     freeListPointer = next;
 
@@ -115,8 +115,8 @@ const mallocImpl = (
   const freeList = getFreeList();
 
   const sizeOfLargest = freeList.reduce((acc, block) => {
-    if (block.size > acc) {
-      return block.size;
+    if (block.sizeWithHeader > acc) {
+      return block.sizeWithHeader;
     }
     return acc;
   }, 0);
@@ -149,17 +149,17 @@ const mallocImpl = (
 
     const next = block.next;
 
-    const newBlockStart = block.startIndex;
+    const newBlockStart = block.ptr - 2;
 
     let allocatedSize = size + 2;
 
-    if (block.size - allocatedSize < 3) {
+    if (block.sizeWithHeader - allocatedSize < 3) {
       // There's not enough space for a free block header plus at least one
       // byte of free space, so we will hand out the entire block
-      allocatedSize = block.size;
+      allocatedSize = block.sizeWithHeader;
     }
 
-    const newBlockEnd = block.startIndex + allocatedSize;
+    const newBlockEnd = newBlockStart + allocatedSize;
 
     writeAllocatedBlockHeader(newBlockStart, allocatedSize);
 
@@ -167,8 +167,12 @@ const mallocImpl = (
 
     // If we have enough space left over to create a new free block, we
     // need to split the block
-    if (block.size - allocatedSize >= 3) {
-      writeFreeBlockHeader(newBlockEnd, block.size - sizeWithHeader, next);
+    if (block.sizeWithHeader - allocatedSize >= 3) {
+      writeFreeBlockHeader(
+        newBlockEnd,
+        block.sizeWithHeader - sizeWithHeader,
+        next
+      );
       newSplitFreeBlockIndex = newBlockEnd;
     }
 
@@ -178,9 +182,9 @@ const mallocImpl = (
     // update the free list pointer, since the free list pointer should
     // always point to the first block in the free list
     if (newSplitFreeBlockIndex !== undefined) {
-      nextFreeListEntryPtr = newSplitFreeBlockIndex;
+      nextFreeListEntryPtr = newSplitFreeBlockIndex + 2;
     } else if (hasNext) {
-      nextFreeListEntryPtr = freeList[i + 1].startIndex;
+      nextFreeListEntryPtr = freeList[i + 1].ptr;
     } else {
       // If we just filled the last block in the free list, we need to
       // update the free list pointer to 0
@@ -191,14 +195,14 @@ const mallocImpl = (
       writeToHeap(1, nextFreeListEntryPtr);
     } else {
       // We need to update the previous block's next pointer
-      const prev = freeList[i - 1].startIndex;
-      writeToHeap(prev + 1, nextFreeListEntryPtr);
+      const prev = freeList[i - 1].ptr;
+      writeToHeap(prev - 1, nextFreeListEntryPtr);
     }
 
     if (updateNextFitPointer) {
       if (nextFreeListEntryPtr === 0) {
         const freeList = getFreeList();
-        nextFreeListEntryPtr = freeList[0]?.startIndex ?? 0;
+        nextFreeListEntryPtr = freeList[0]?.ptr ?? 0;
       }
 
       writeToHeap(2, nextFreeListEntryPtr);
@@ -220,7 +224,7 @@ const mallocImpl = (
     for (let i = 0; i < freeList.length; i++) {
       const block = freeList[i];
 
-      if (block.size >= sizeWithHeader) {
+      if (block.sizeWithHeader >= sizeWithHeader) {
         return allocateAt(i);
       }
     }
@@ -231,9 +235,12 @@ const mallocImpl = (
     for (let i = 0; i < freeList.length; i++) {
       const block = freeList[i];
 
-      if (block.size >= sizeWithHeader && block.size < bestFitSize) {
+      if (
+        block.sizeWithHeader >= sizeWithHeader &&
+        block.sizeWithHeader < bestFitSize
+      ) {
         bestFitIndex = i;
-        bestFitSize = block.size;
+        bestFitSize = block.sizeWithHeader;
       }
     }
 
@@ -247,9 +254,12 @@ const mallocImpl = (
     for (let i = 0; i < freeList.length; i++) {
       const block = freeList[i];
 
-      if (block.size >= sizeWithHeader && block.size > worstFitSize) {
+      if (
+        block.sizeWithHeader >= sizeWithHeader &&
+        block.sizeWithHeader > worstFitSize
+      ) {
         worstFitIndex = i;
-        worstFitSize = block.size;
+        worstFitSize = block.sizeWithHeader;
       }
     }
 
@@ -264,20 +274,20 @@ const mallocImpl = (
 
       const block = freeList.find((b, i) => {
         blockIndex = i;
-        return b.startIndex === nextFitPointer;
+        return b.ptr === nextFitPointer;
       });
 
       if (!block) {
         break;
       }
 
-      if (block.size >= sizeWithHeader) {
+      if (block.sizeWithHeader >= sizeWithHeader) {
         return allocateAt(blockIndex, true);
       }
 
       nextFitPointer = block.next;
       if (nextFitPointer === 0) {
-        nextFitPointer = freeList[0].startIndex;
+        nextFitPointer = freeList[0].ptr;
       }
     }
   }
@@ -320,11 +330,9 @@ const freeImpl = (
     throw new Error("Internal error (free()): Bad output from coerce()");
   }
 
-  // The address is the char value minus 2. The incoming pointer will be to the
-  // start of user-addressable memory, but we want a pointer to our header.
-  const address = addressValue.value.literal.value - 2;
+  const address = addressValue.value.literal.value;
 
-  if (state.heap[address + 1] !== 0xab) {
+  if (state.heap[address - 1] !== 0xab) {
     throw new Error(
       `Runtime error: Invalid magic number. Expected 0xAB, found 0x${state.heap[
         address + 1
@@ -335,11 +343,11 @@ const freeImpl = (
     );
   }
 
-  if (address < 3) {
+  if (address < 5) {
     throw new Error(`Runtime error: Segmentation fault.`);
   }
 
-  const blockSize = state.heap[address];
+  const blockSize = state.heap[address - 2];
 
   if (blockSize < 3) {
     throw new Error(
@@ -351,7 +359,7 @@ const freeImpl = (
 
   if (freeList.length === 0) {
     // If the free list is empty, we can just add the block to the free list
-    writeFreeBlockHeader(address, blockSize, 0);
+    writeFreeBlockHeader(address - 2, blockSize, 0);
     writeToHeap(1, address);
     return {
       nodeType: "void",
@@ -364,13 +372,13 @@ const freeImpl = (
   for (let i = 0; i < freeList.length; i++) {
     const block = freeList[i];
 
-    if (block.startIndex === address) {
+    if (block.ptr === address) {
       throw new Error(`Runtime error: Segmentation fault (double free).`);
     }
 
-    if (block.startIndex < address) {
+    if (block.ptr < address) {
       blockBefore = block;
-    } else if (block.startIndex > address) {
+    } else if (block.ptr > address) {
       blockAfter = block;
       break;
     }
@@ -380,30 +388,30 @@ const freeImpl = (
   let blockSizeAfterMerge = blockSize;
 
   // If the block is adjacent to the block before it, we can merge them
-  if (blockBefore && blockBefore.startIndex + blockBefore.size === address) {
+  if (blockBefore && blockBefore.ptr + blockBefore.sizeWithHeader === address) {
     // Merge with the block before
-    const newSize = blockBefore.size + blockSize;
-    writeFreeBlockHeader(blockBefore.startIndex, newSize, address + blockSize);
-    blockAddressAfterMerge = blockBefore.startIndex;
+    const newSize = blockBefore.sizeWithHeader + blockSize;
+    writeFreeBlockHeader(blockBefore.ptr - 2, newSize, address + blockSize);
+    blockAddressAfterMerge = blockBefore.ptr;
     blockSizeAfterMerge = newSize;
   } else {
     // Otherwise, we need to add it to the free list
-    writeFreeBlockHeader(address, blockSize, blockAfter?.startIndex ?? 0);
+    writeFreeBlockHeader(address - 2, blockSize, blockAfter?.ptr ?? 0);
 
     if (blockBefore) {
-      writeToHeap(blockBefore.startIndex + 1, address);
+      writeToHeap(blockBefore.ptr - 1, address);
     } else {
       writeToHeap(1, address);
     }
   }
 
   // If the block is adjacent to the block after it, we can merge them
-  if (blockAfter && address + blockSize === blockAfter.startIndex) {
+  if (blockAfter && address + blockSize === blockAfter.ptr) {
     // Merge with the block after
-    const newSize = blockSizeAfterMerge + blockAfter.size;
-    writeFreeBlockHeader(blockAddressAfterMerge, newSize, blockAfter.next);
+    const newSize = blockSizeAfterMerge + blockAfter.sizeWithHeader;
+    writeFreeBlockHeader(blockAddressAfterMerge - 2, newSize, blockAfter.next);
 
-    if (state.heap[2] === blockAfter.startIndex) {
+    if (state.heap[2] === blockAfter.ptr) {
       // If the next fit pointer is pointing to the block we just merged, we need to update it
       writeToHeap(2, blockAddressAfterMerge);
     }

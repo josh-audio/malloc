@@ -472,7 +472,7 @@ class Engine {
             // If the next fit pointer is not in the free list, set it to the
             // first block so it's not invalid.
             const freeList = getFreeList();
-            if (!freeList.find((block) => block.startIndex === state.heap[2])) {
+            if (!freeList.find((block) => block.ptr === state.heap[2])) {
               state.heap[2] = state.heap[1];
             }
           }
