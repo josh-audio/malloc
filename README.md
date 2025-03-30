@@ -68,6 +68,7 @@ Besides `malloc()`, `free()` and `sizeof()`, there are a few helper functions th
 - `clear()`: Clears the command history
 - `setDisplayBase(base)`: Sets the display base for the memory visualization; accepts either `10` or `16`. Default is `10`.
 - `setStrategy(strategy)`: Sets the memory allocation strategy. Accepts `FIRST_FIT`, `NEXT_FIT`, `WORST_FIT` or `BEST_FIT`.
+- `save("some key")` and `load("some key")`: Saves and loads memory states. Persists between browser sessions.
 
 ## Development
 

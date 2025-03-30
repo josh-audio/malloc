@@ -73,7 +73,18 @@
     
     ```c
     // Gets the value at heap address a, casts it to a char*, and writes 10 to that address
-    *((char*) *a) = 10;
+    *((unsigned int*) *a) = 10;
+    ```
+  - Added save and load, which persist between sessions using local storae. As an example:
+    ```c
+    // Do some things...
+
+    save("some key");
+
+    // Reload the page...
+
+    // Loads the state saved at "some key"
+    load("some key");
     ```
 
 ### Maintenance:
