@@ -86,6 +86,28 @@
     // Loads the state saved at "some key"
     load("some key");
     ```
+  - Added `strlen()` and `strcpy()`:
+  
+    Unlike the heap, stack memory does not have a 1:1 byte representation. This means that while heap strings behave like C strings, stack strings do not.
+
+    Here are some things you can do:
+
+    ```c
+    // This is valid C, and also works in the simulator:
+    char *a = malloc(strlen("hello") + 1);
+    strcpy(a, "hello");
+
+    // This is not valid C, but works in the simulator:
+    string myString = "hello";
+    char *b = malloc(strlen(myString) + 1);
+    strcpy(b, myString);
+
+    // If you want to read out a string, there is a convenience function for it:
+    getString(a); // -> "hello"
+
+    // strcpy will happily write past the allocated bounds:
+    strcpy(a, "this is way too long");
+    ```
 
 ### Maintenance:
 

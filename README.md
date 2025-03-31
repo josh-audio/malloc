@@ -69,6 +69,28 @@ Besides `malloc()`, `free()` and `sizeof()`, there are a few helper functions th
 - `setDisplayBase(base)`: Sets the display base for the memory visualization; accepts either `10` or `16`. Default is `10`.
 - `setStrategy(strategy)`: Sets the memory allocation strategy. Accepts `FIRST_FIT`, `NEXT_FIT`, `WORST_FIT` or `BEST_FIT`.
 - `save("some key")` and `load("some key")`: Saves and loads memory states. Persists between browser sessions.
+- `strlen()` and `strcpy()`:
+  
+  Unlike the heap, stack memory does not have a 1:1 byte representation. This means that while heap strings behave like C strings, stack strings do not.
+
+  Here are some things you can do:
+
+  ```c
+  // This is valid C, and also works in the simulator:
+  char *a = malloc(strlen("hello") + 1);
+  strcpy(a, "hello");
+
+  // This is not valid C, but works in the simulator:
+  string myString = "hello";
+  char *b = malloc(strlen(myString) + 1);
+  strcpy(b, myString);
+
+  // If you want to read out a string, there is a convenience function for it:
+  getString(a); // -> "hello"
+
+  // strcpy will happily write past the allocated bounds:
+  strcpy(a, "this is way too long");
+  ```
 
 ## Development
 
