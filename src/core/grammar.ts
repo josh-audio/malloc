@@ -86,6 +86,18 @@ const grammar: nearley.CompiledRules = {
     },
     { name: "function_call$subexpression$1", symbols: ["statement"] },
     { name: "function_call$subexpression$1", symbols: ["_"] },
+    { name: "function_call$ebnf$1", symbols: [] },
+    {
+      name: "function_call$ebnf$1$subexpression$1",
+      symbols: ["_", { literal: "," }, "_", "statement"],
+    },
+    {
+      name: "function_call$ebnf$1",
+      symbols: ["function_call$ebnf$1", "function_call$ebnf$1$subexpression$1"],
+      postprocess: function arrpush(d) {
+        return d[0].concat([d[1]]);
+      },
+    },
     {
       name: "function_call",
       symbols: [
@@ -94,23 +106,23 @@ const grammar: nearley.CompiledRules = {
         { literal: "(" },
         "_",
         "function_call$subexpression$1",
+        "function_call$ebnf$1",
         "_",
         { literal: ")" },
       ],
       postprocess: function (data) {
-        const arg = data[4][0];
-        if (arg?.nodeType === undefined) {
-          return {
-            nodeType: "functionCall",
-            functionName: data[0],
-            arguments: [],
-          };
-        }
+        const arg1 = data[4][0];
+        const rest = data[5];
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const args = [arg1, ...rest.map((item: any) => item[3])]
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .filter((item: any) => item !== null);
 
         return {
           nodeType: "functionCall",
           functionName: data[0],
-          arguments: [data[4][0]],
+          arguments: args,
         };
       },
     },

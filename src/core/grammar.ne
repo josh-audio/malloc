@@ -41,21 +41,20 @@ assignment -> (declaration | identifier | array_access | dereference) _ "=" _ st
   }
 %}
 
-function_call -> identifier _ "(" _ ( statement | _ ) _ ")" {%
+function_call -> identifier _ "(" _ ( statement | _ ) (_ "," _ statement):* _ ")" {%
   function(data) {
-    const arg = data[4][0];
-    if (arg?.nodeType === undefined) {
-      return {
-        nodeType: 'functionCall',
-        functionName: data[0],
-        arguments: []
-      }
-    }
+    const arg1 = data[4][0];
+    const rest = data[5];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const args = [arg1, ...rest.map((item: any) => item[3])]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .filter((item: any) => item !== null);
 
     return {
       nodeType: 'functionCall',
       functionName: data[0],
-      arguments: [data[4][0]]
+      arguments: args,
     }
   }
 %}

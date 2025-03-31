@@ -597,6 +597,212 @@ class Engine {
         },
       },
     },
+
+    strlen: {
+      nodeType: "typedRuntimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+        isPointer: false,
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [
+          {
+            nodeType: "declaration",
+            declaration: {
+              nodeType: "singleDeclaration",
+              identifier: {
+                nodeType: "identifier",
+                identifier: "str",
+              },
+              type: {
+                nodeType: "type",
+                type: "string",
+                isPointer: false,
+              },
+            },
+          },
+        ],
+        body: (args) => {
+          if (args[0].nodeType === "type") {
+            throw new Error(`Runtime error: Cannot call strlen with a type`);
+          }
+
+          if (args[0].value.nodeType !== "literal") {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type string, but got ${args[0].value.nodeType}.`
+            );
+          }
+
+          if (args[0].value.literal.nodeType !== "string") {
+            throw new Error(
+              `Internal error: Expected argument 0 to be of type string, but got ${args[0].value.literal.nodeType}.`
+            );
+          }
+
+          const str = args[0].value.literal.value;
+          const utf8Encode = new TextEncoder();
+          utf8Encode.encode(str);
+          const len = utf8Encode.encode(str).length;
+
+          if (len > 255) {
+            throw new Error(
+              `Runtime error: String length ${len} exceeds maximum length of 255.`
+            );
+          }
+
+          return {
+            nodeType: "typedRuntimeValue",
+            type: {
+              nodeType: "type",
+              type: "uint8_t",
+              isPointer: false,
+            },
+            value: coerceLiteralToU8({
+              nodeType: "literal",
+              literal: {
+                nodeType: "integer",
+                value: len,
+              },
+            }),
+          };
+        },
+      },
+    },
+
+    strcpy: {
+      nodeType: "typedRuntimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+        isPointer: false,
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [
+          {
+            nodeType: "declaration",
+            declaration: {
+              nodeType: "singleDeclaration",
+              identifier: {
+                nodeType: "identifier",
+                identifier: "dest",
+              },
+              type: {
+                nodeType: "type",
+                type: "string",
+                isPointer: true,
+              },
+            },
+          },
+          {
+            nodeType: "declaration",
+            declaration: {
+              nodeType: "singleDeclaration",
+              identifier: {
+                nodeType: "identifier",
+                identifier: "src",
+              },
+              type: {
+                nodeType: "type",
+                type: "string",
+                isPointer: true,
+              },
+            },
+          },
+        ],
+        body: (args) => {
+          if (args.some((arg) => arg.nodeType === "type")) {
+            throw new Error(`Runtime error: Cannot call strcpy with a type`);
+          }
+
+          if (args.length !== 2) {
+            throw new Error(
+              `Runtime error: Expected 2 arguments for strcpy, but got ${args.length}.`
+            );
+          }
+
+          const dest = args[0];
+          const src = args[1];
+
+          let srcStr = "";
+
+          if (
+            src.nodeType !== "typedRuntimeValue" &&
+            src.nodeType !== "untypedRuntimeValue"
+          ) {
+            throw new Error(
+              `Runtime error: Expected argument 1 to be of type char* or string, but got ${src.nodeType}.`
+            );
+          }
+          if (src.value.nodeType !== "literal") {
+            throw new Error(
+              `Runtime error: Expected argument 1 to be of type char* or string, but got ${src.value.nodeType}.`
+            );
+          }
+          if (
+            src.nodeType === "typedRuntimeValue" &&
+            src.value.literal.nodeType === "integer" &&
+            src.type.isPointer === true &&
+            (src.type.type === "uint8_t" || src.type.type === "int8_t")
+          ) {
+            const address = src.value.literal.value;
+            let i = address;
+            const bytes: number[] = [];
+            while (i < 256 && state.heap[i] !== 0) {
+              bytes.push(state.heap[i]);
+              i++;
+            }
+
+            const decoder = new TextDecoder("utf-8");
+            srcStr = decoder.decode(new Uint8Array(bytes));
+          } else if (src.value.literal.nodeType === "string") {
+            srcStr = src.value.literal.value;
+          } else {
+            throw new Error(
+              `Runtime error: Expected argument 1 to be of type char* or string, but got ${src.value.literal.nodeType}.`
+            );
+          }
+
+          if (
+            dest.nodeType !== "typedRuntimeValue" &&
+            dest.nodeType !== "untypedRuntimeValue"
+          ) {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type char* or string, but got ${dest.nodeType}.`
+            );
+          }
+          if (dest.value.nodeType !== "literal") {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type char* or string, but got ${dest.value.nodeType}.`
+            );
+          }
+          if (
+            dest.nodeType === "typedRuntimeValue" &&
+            dest.value.literal.nodeType === "integer" &&
+            dest.type.isPointer === true &&
+            (dest.type.type === "uint8_t" || dest.type.type === "int8_t")
+          ) {
+            const address = dest.value.literal.value;
+            let i = 0;
+            for (const byte of new TextEncoder().encode(srcStr)) {
+              state.heap[address + i] = byte;
+              i++;
+            }
+            state.heap[address + i] = 0; // Null-terminate the string
+          } else if (dest.value.literal.nodeType === "string") {
+            dest.value.literal.value = srcStr;
+          } else {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type char* or string, but got ${dest.value.literal.nodeType}.`
+            );
+          }
+
+          return { nodeType: "void" };
+        },
+      },
+    },
   };
 
   // Recursively evaluates the given statement. Returns a literal node if the
@@ -662,13 +868,17 @@ class Engine {
         );
       }
 
-      return coerce(
-        {
-          nodeType: "untypedRuntimeValue",
-          value: result.value,
-        },
-        statement.type
-      );
+      return {
+        nodeType: "typedRuntimeValue",
+        type: statement.type,
+        value: coerce(
+          {
+            nodeType: "untypedRuntimeValue",
+            value: result.value,
+          },
+          statement.type
+        ).value,
+      };
     } else if (statement.nodeType == "parenthesis") {
       return this.evaluate(statement.statement);
     } else if (statement.nodeType === "declaration") {
