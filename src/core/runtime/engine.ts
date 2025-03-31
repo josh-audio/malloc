@@ -803,6 +803,80 @@ class Engine {
         },
       },
     },
+
+    // returns the string at the given memory address
+    getString: {
+      nodeType: "typedRuntimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+        isPointer: false,
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [
+          {
+            nodeType: "declaration",
+            declaration: {
+              nodeType: "singleDeclaration",
+              identifier: {
+                nodeType: "identifier",
+                identifier: "address",
+              },
+              type: {
+                nodeType: "type",
+                type: "uint32_t",
+                isPointer: true,
+              },
+            },
+          },
+        ],
+        body: (args) => {
+          if (args[0].nodeType === "type") {
+            throw new Error(`Runtime error: Cannot call getString with a type`);
+          }
+
+          if (args[0].value.nodeType !== "literal") {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type int, but got ${args[0].value.nodeType}.`
+            );
+          }
+
+          if (args[0].value.literal.nodeType !== "integer") {
+            throw new Error(
+              `Internal error: Expected argument 0 to be of type int, but got ${args[0].value.literal.nodeType}.`
+            );
+          }
+
+          const address = args[0].value.literal.value;
+
+          const bytes: number[] = [];
+          let i = address;
+          while (i < 256 && state.heap[i] !== 0) {
+            bytes.push(state.heap[i]);
+            i++;
+          }
+
+          const decoder = new TextDecoder("utf-8");
+          const str = decoder.decode(new Uint8Array(bytes));
+          return {
+            nodeType: "typedRuntimeValue",
+            type: {
+              nodeType: "type",
+              type: "string",
+              isPointer: false,
+            },
+            value: {
+              nodeType: "literal",
+              literal: {
+                nodeType: "string",
+                value: str,
+              },
+            },
+          };
+        },
+      },
+    },
   };
 
   // Recursively evaluates the given statement. Returns a literal node if the
