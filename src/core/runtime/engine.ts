@@ -65,7 +65,7 @@ type TypedRuntimeValueNode = {
 type Scope = Record<string, TypedRuntimeValueNode>;
 
 class Engine {
-  globalScope: Scope = {
+  staticGlobalScope: Scope = {
     malloc: {
       nodeType: "typedRuntimeValue",
       type: {
@@ -544,7 +544,7 @@ class Engine {
           }
 
           const key = args[0].value.literal.value;
-          state.save(key);
+          state.save(key, this.dynamicGlobalScope);
 
           return { nodeType: "void" };
         },
@@ -595,7 +595,7 @@ class Engine {
           }
 
           const key = args[0].value.literal.value;
-          state.load(key);
+          this.dynamicGlobalScope = state.load(key);
 
           return { nodeType: "void" };
         },
@@ -883,6 +883,14 @@ class Engine {
     },
   };
 
+  dynamicGlobalScope: Scope = {};
+
+  getFromScope(identifier: string): TypedRuntimeValueNode | undefined {
+    return (
+      this.dynamicGlobalScope[identifier] ?? this.staticGlobalScope[identifier]
+    );
+  }
+
   // Recursively evaluates the given statement. Returns a literal node if the
   // statement evaluates to a value, otherwise returns a void node.
   evaluate(
@@ -967,7 +975,7 @@ class Engine {
       }
 
       if (statement.declaration.type.type === "string") {
-        this.globalScope[statement.declaration.identifier.identifier] = {
+        this.dynamicGlobalScope[statement.declaration.identifier.identifier] = {
           nodeType: "typedRuntimeValue",
           type: statement.declaration.type,
           value: {
@@ -979,24 +987,25 @@ class Engine {
           },
         };
       } else {
-        this.globalScope[statement.declaration.identifier.identifier] = coerce(
-          {
-            nodeType: "untypedRuntimeValue",
-            value: {
-              nodeType: "literal",
-              literal: {
-                nodeType: "integer",
-                value: 0,
+        this.dynamicGlobalScope[statement.declaration.identifier.identifier] =
+          coerce(
+            {
+              nodeType: "untypedRuntimeValue",
+              value: {
+                nodeType: "literal",
+                literal: {
+                  nodeType: "integer",
+                  value: 0,
+                },
               },
             },
-          },
-          statement.declaration.type
-        );
+            statement.declaration.type
+          );
       }
 
       return { nodeType: "void" };
     } else if (statement.nodeType === "identifier") {
-      const value = this.globalScope[statement.identifier];
+      const value = this.getFromScope(statement.identifier);
 
       if (value === undefined) {
         throw new Error(
@@ -1247,9 +1256,9 @@ class Engine {
             nodeType: "untypedRuntimeValue",
             value: value.value,
           },
-          this.globalScope[statement.left.identifier].type
+          this.getFromScope(statement.left.identifier)!.type
         );
-        this.globalScope[statement.left.identifier] = scopeItem;
+        this.dynamicGlobalScope[statement.left.identifier] = scopeItem;
       } else if (statement.left.nodeType === "declaration") {
         scopeItem = coerce(
           {
@@ -1258,8 +1267,9 @@ class Engine {
           },
           statement.left.declaration.type
         );
-        this.globalScope[statement.left.declaration.identifier.identifier] =
-          scopeItem;
+        this.dynamicGlobalScope[
+          statement.left.declaration.identifier.identifier
+        ] = scopeItem;
       } else {
         throw new Error(
           `Internal error: Unexpected assignment left-hand side node type.`

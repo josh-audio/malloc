@@ -17,8 +17,11 @@ class Controller {
       return input;
     }
 
-    let predictions = Object.keys(engine.globalScope).map((identifier) => {
-      const value = engine.globalScope[identifier].value;
+    let predictions = Object.keys({
+      ...engine.staticGlobalScope,
+      ...engine.dynamicGlobalScope,
+    }).map((identifier) => {
+      const value = engine.getFromScope(identifier)!.value;
 
       if (value.nodeType === "literal") {
         return identifier;
@@ -93,7 +96,9 @@ class Controller {
           throw new Error("Internal error: Unexpected parser output.");
         }
 
-        const validatedList = parser.results.map(result => statementSchema.parse(result));
+        const validatedList = parser.results.map((result) =>
+          statementSchema.parse(result)
+        );
         let validated = validatedList[0];
 
         // This is a hack to make sure sizeof(int), which is ambiguous, is
@@ -130,9 +135,11 @@ class Controller {
 
               return false;
             }
-          }
+          };
 
-          validated = validatedList.find(result => !hasSizeOfIdentifier(result)) ?? validatedList[0];
+          validated =
+            validatedList.find((result) => !hasSizeOfIdentifier(result)) ??
+            validatedList[0];
         }
 
         const result = engine.evaluate(validated);

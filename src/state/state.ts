@@ -7,6 +7,7 @@ import {
   NEXT_FIT,
   WORST_FIT,
 } from "../core/runtime/malloc_impl";
+import { Scope } from "../core/runtime/engine";
 
 type CommandHistoryItem = {
   style: "command" | "error" | "info";
@@ -52,15 +53,20 @@ class State {
   }
 
   // Saves the memory array to the local storage
-  save(key: string): void {
-    localStorage.setItem(key, JSON.stringify(this.heap));
+  save(key: string, scope: Scope): void {
+    localStorage.setItem(
+      key,
+      JSON.stringify({ heap: this.heap, scope: scope })
+    );
   }
 
   // Loads the memory array from the local storage
-  load(key: string): void {
+  load(key: string): Scope {
     const data = localStorage.getItem(key);
     if (data) {
-      this.heap = JSON.parse(data);
+      const { heap, scope } = JSON.parse(data);
+      this.heap = heap;
+      return scope;
     } else {
       throw new Error("No data found in local storage for the given key.");
     }
