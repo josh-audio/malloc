@@ -99,9 +99,45 @@ class Engine {
             throw new Error(`Runtime error: Cannot call malloc with a type`);
           }
 
-          return mallocImpl(
-            args.filter((arg) => arg.nodeType === "untypedRuntimeValue")
-          );
+          if (args.length !== 1) {
+            throw new Error(
+              `Runtime error: Expected 1 argument for malloc, but got ${args.length}.`
+            );
+          }
+
+          if (
+            args[0].nodeType !== "typedRuntimeValue" &&
+            args[0].nodeType !== "untypedRuntimeValue"
+          ) {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type int, but got ${args[0].nodeType}.`
+            );
+          }
+
+          if (args[0].value.nodeType !== "literal") {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type int, but got ${args[0].value.nodeType}.`
+            );
+          }
+
+          if (args[0].value.literal.nodeType !== "integer") {
+            throw new Error(
+              `Internal error: Expected argument 0 to be of type int, but got ${args[0].value.literal.nodeType}.`
+            );
+          }
+
+          return mallocImpl([
+            {
+              nodeType: "untypedRuntimeValue",
+              value: {
+                nodeType: "literal",
+                literal: {
+                  nodeType: "integer",
+                  value: args[0].value.literal.value,
+                },
+              },
+            },
+          ]);
         },
       },
     },
