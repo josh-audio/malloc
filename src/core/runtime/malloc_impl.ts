@@ -391,7 +391,7 @@ const freeImpl = (
   if (blockBefore && blockBefore.ptr + blockBefore.sizeWithHeader === address) {
     // Merge with the block before
     const newSize = blockBefore.sizeWithHeader + blockSize;
-    writeFreeBlockHeader(blockBefore.ptr - 2, newSize, address + blockSize);
+    writeFreeBlockHeader(blockBefore.ptr - 2, newSize, blockAfter?.ptr ?? 0);
     blockAddressAfterMerge = blockBefore.ptr;
     blockSizeAfterMerge = newSize;
   } else {
