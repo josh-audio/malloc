@@ -427,14 +427,17 @@ class Controller {
       return i;
     });
 
-    const collapsedBlocks = blockGroups.reduce((acc, cur, index) => {
-      if (acc[cur] === undefined) {
-        acc[cur] = [];
-      }
+    const collapsedBlocks = blockGroups
+      .reduce((acc, cur, index) => {
+        if (acc[cur] === undefined) {
+          acc[cur] = [];
+        }
 
-      acc[cur].push(...blocks[index]);
-      return acc;
-    }, [] as ReturnType<Controller["getState"]>);
+        acc[cur].push(...blocks[index]);
+        return acc;
+      }, [] as ReturnType<Controller["getState"]>)
+      // Not sure why this is necessary, but I don't feel like disecting it
+      .filter((x) => x !== undefined);
 
     return collapsedBlocks;
   }

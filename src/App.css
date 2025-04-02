@@ -202,11 +202,21 @@ html {
   padding-left: 8px;
 }
 
+.cell-container.block-start .memory-address {
+  border-top-left-radius: 5px;
+  border-bottom-left-radius: 5px;
+}
+
 .cell-container.block-end {
   margin-right: 20px;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
   border-right: 1px solid #ffffff08;
+}
+
+.cell-container.block-end .memory-address {
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
 }
 
 .memory-value {
@@ -253,4 +263,10 @@ html {
 
 .cell-container.error {
   background-color: #a02f2f;
+}
+
+.cell-container.highlighted .memory-address {
+  color: #fff7;
+  background-color: #ffffff11;
+  border: 1px solid #ffffff44;
 }

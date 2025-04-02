@@ -8,15 +8,26 @@ const MemoryVisualizer = observer(() => {
   return (
     <div className="memory-container">
       {memoryState
-        .map((block) => {
-          return block.map((cell, cellIndex) => (
-            <MemoryCell
-              key={cell.index}
-              cellState={cell}
-              blockStart={cellIndex === 0}
-              blockEnd={cellIndex === block.length - 1}
-            />
-          ));
+        .map((block, blockIndex) => {
+          return block.map((cell, cellIndex) => {
+            const isAllocated = cell.isAllocated;
+
+            const isPointer =
+              (blockIndex === 0 && (cellIndex === 1 || cellIndex === 2)) ||
+              (blockIndex !== 0 && !isAllocated && cellIndex === 1);
+            const isSize = blockIndex > 0 && cellIndex === 0;
+
+            return (
+              <MemoryCell
+                key={cell.index}
+                cellState={cell}
+                blockStart={cellIndex === 0}
+                blockEnd={cellIndex === block.length - 1}
+                isPointer={isPointer}
+                isSize={isSize}
+              />
+            );
+          });
         })
         // .flat() is used to flatten the array of arrays
         //

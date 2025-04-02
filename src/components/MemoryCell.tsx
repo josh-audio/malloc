@@ -12,6 +12,8 @@ const MemoryCell = observer(
     };
     blockStart: boolean;
     blockEnd: boolean;
+    isPointer: boolean;
+    isSize: boolean;
   }) => {
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -37,6 +39,18 @@ const MemoryCell = observer(
       }
     });
 
+    const isHighlightedAsPointer =
+      state.highlightedPointer !== null &&
+      state.heap[state.highlightedPointer] === props.cellState.index;
+
+    const isHighlightedAsSize =
+      state.highlightedSize !== null &&
+      props.cellState.index >= state.highlightedSize &&
+      props.cellState.index <
+        state.highlightedSize + state.heap[state.highlightedSize];
+
+    const isHighlighted = isHighlightedAsPointer || isHighlightedAsSize;
+
     return (
       <div
         className={
@@ -45,11 +59,26 @@ const MemoryCell = observer(
           (props.cellState.isReserved ? " reserved" : " unreserved") +
           (props.cellState.error ? " error" : "") +
           (props.blockStart ? " block-start" : "") +
-          (props.blockEnd ? " block-end" : "")
+          (props.blockEnd ? " block-end" : "") +
+          (isHighlighted ? " highlighted" : "")
         }
         onClick={() => {
           setEdit(true);
           setInputValue(value);
+        }}
+        onMouseEnter={() => {
+          state.highlightedPointer = null;
+          state.highlightedSize = null;
+
+          if (props.isPointer) {
+            state.highlightedPointer = props.cellState.index;
+          } else if (props.isSize) {
+            state.highlightedSize = props.cellState.index;
+          }
+        }}
+        onMouseLeave={() => {
+          state.highlightedPointer = null;
+          state.highlightedSize = null;
         }}
       >
         <div className="memory-value">{edit ? inputValue : value}</div>

@@ -41,6 +41,9 @@ class State {
   //  - info (non-error feedback)
   commandHistory: CommandHistoryItem[] = getDefaultCommandHistory();
 
+  highlightedPointer: number | null = null;
+  highlightedSize: number | null = null;
+
   resetCommandHistory() {
     this.commandHistory = getDefaultCommandHistory();
   }
