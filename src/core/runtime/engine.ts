@@ -1251,13 +1251,22 @@ class Engine {
       }
       // Set the value in the global scope
       else if (statement.left.nodeType === "identifier") {
+        const itemFromScope = this.getFromScope(statement.left.identifier);
+
+        if (!itemFromScope) {
+          throw new Error(
+            `Runtime error: Identifier "${statement.left.identifier}" is not defined.`
+          );
+        }
+
         scopeItem = coerce(
           {
             nodeType: "untypedRuntimeValue",
             value: value.value,
           },
-          this.getFromScope(statement.left.identifier)!.type
+          itemFromScope.type
         );
+
         this.dynamicGlobalScope[statement.left.identifier] = scopeItem;
       } else if (statement.left.nodeType === "declaration") {
         scopeItem = coerce(
