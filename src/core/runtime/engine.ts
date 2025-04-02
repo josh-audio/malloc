@@ -8,6 +8,7 @@ import {
 import { coerce, coerceLiteralToU8 } from "./coerce";
 import {
   BEST_FIT,
+  coalesceImpl,
   FIRST_FIT,
   freeImpl,
   getFreeList,
@@ -218,6 +219,23 @@ class Engine {
                 arg.nodeType === "typedRuntimeValue"
             )
           );
+        },
+      },
+    },
+
+    coalesce: {
+      nodeType: "typedRuntimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+        isPointer: false,
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [],
+        body: () => {
+          coalesceImpl();
+          return { nodeType: "void" };
         },
       },
     },

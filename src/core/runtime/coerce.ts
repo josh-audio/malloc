@@ -121,7 +121,6 @@ const coerce = (
   }
 
   if (type.isPointer) {
-    console.log(value.value);
     return {
       nodeType: "typedRuntimeValue",
       type: type,

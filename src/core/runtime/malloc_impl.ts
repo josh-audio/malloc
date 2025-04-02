@@ -390,7 +390,11 @@ const freeImpl = (
   const coalesce = state.coalesceAfterFree;
 
   // If the block is adjacent to the block before it, we can merge them
-  if (coalesce && blockBefore && blockBefore.ptr + blockBefore.sizeWithHeader === address) {
+  if (
+    coalesce &&
+    blockBefore &&
+    blockBefore.ptr + blockBefore.sizeWithHeader === address
+  ) {
     // Merge with the block before
     const newSize = blockBefore.sizeWithHeader + blockSize;
     writeFreeBlockHeader(blockBefore.ptr - 2, newSize, blockAfter?.ptr ?? 0);
@@ -424,9 +428,48 @@ const freeImpl = (
   };
 };
 
+const coalesceImpl = (): VoidNode => {
+  let freeList = getFreeList();
+
+  if (freeList.length < 2) {
+    return {
+      nodeType: "void",
+    };
+  }
+
+  // Inefficient, but straightforward
+  while (true) {
+    let merged = false;
+
+    for (let i = 0; i < freeList.length - 1; i++) {
+      const block = freeList[i];
+      const nextBlock = freeList[i + 1];
+
+      if (block.ptr + block.sizeWithHeader === nextBlock.ptr) {
+        // Merge the two blocks
+        const newSize = block.sizeWithHeader + nextBlock.sizeWithHeader;
+        writeFreeBlockHeader(block.ptr - 2, newSize, nextBlock.next);
+        merged = true;
+        break;
+      }
+    }
+
+    if (!merged) {
+      break;
+    }
+
+    freeList = getFreeList();
+  }
+
+  return {
+    nodeType: "void",
+  };
+};
+
 export {
   mallocImpl,
   freeImpl,
+  coalesceImpl,
   initMemory,
   getFreeList,
   FIRST_FIT,
