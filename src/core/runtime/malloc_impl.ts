@@ -387,8 +387,10 @@ const freeImpl = (
   let blockAddressAfterMerge = address;
   let blockSizeAfterMerge = blockSize;
 
+  const coalesce = state.coalesceAfterFree;
+
   // If the block is adjacent to the block before it, we can merge them
-  if (blockBefore && blockBefore.ptr + blockBefore.sizeWithHeader === address) {
+  if (coalesce && blockBefore && blockBefore.ptr + blockBefore.sizeWithHeader === address) {
     // Merge with the block before
     const newSize = blockBefore.sizeWithHeader + blockSize;
     writeFreeBlockHeader(blockBefore.ptr - 2, newSize, blockAfter?.ptr ?? 0);
@@ -406,7 +408,7 @@ const freeImpl = (
   }
 
   // If the block is adjacent to the block after it, we can merge them
-  if (blockAfter && address + blockSize === blockAfter.ptr) {
+  if (coalesce && blockAfter && address + blockSize === blockAfter.ptr) {
     // Merge with the block after
     const newSize = blockSizeAfterMerge + blockAfter.sizeWithHeader;
     writeFreeBlockHeader(blockAddressAfterMerge - 2, newSize, blockAfter.next);

@@ -20,21 +20,26 @@ class Controller {
     let predictions = Object.keys({
       ...engine.staticGlobalScope,
       ...engine.dynamicGlobalScope,
-    }).map((identifier) => {
-      const value = engine.getFromScope(identifier)!.value;
+    })
+      .map((identifier) => {
+        const value = engine.getFromScope(identifier)!.value;
 
-      if (value.nodeType === "literal") {
-        return identifier;
-      } else if (value.nodeType === "nativeFunctionDefinition") {
-        if (value.arguments.length > 0) {
-          return `${identifier}(`;
+        if (value.nodeType === "literal") {
+          return identifier;
+        } else if (value.nodeType === "nativeFunctionDefinition") {
+          if (value.arguments.length > 0) {
+            return `${identifier}(`;
+          } else {
+            return `${identifier}()`;
+          }
         } else {
-          return `${identifier}()`;
+          throw new Error(`Unexpected value: ${identifier}`);
         }
-      } else {
-        throw new Error(`Unexpected value: ${identifier}`);
-      }
-    });
+      })
+      // This is bad, and part of a workaround for the fact that the parser can't
+      // distinguish between "true" as a literal and "true" as an identifier. See
+      // the definition of true and false in engine.ts for more.
+      .filter((prediction) => prediction !== "false" && prediction !== "true");
 
     predictions = predictions.sort();
 
@@ -161,6 +166,8 @@ class Controller {
           } else if (result.value.literal.nodeType === "string") {
             outputResult = `"${result.value.literal.value}"`;
           } else if (result.value.literal.nodeType === "double") {
+            outputResult = result.value.literal.value.toString();
+          } else if (result.value.literal.nodeType === "boolean") {
             outputResult = result.value.literal.value.toString();
           }
 

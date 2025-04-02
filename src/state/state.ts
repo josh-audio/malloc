@@ -24,6 +24,7 @@ function getDefaultCommandHistory(): CommandHistoryItem[] {
 }
 
 class State {
+  coalesceAfterFree: boolean = true;
   displayBase: 10 | 16 = 10;
   memoryAllocationStrategy:
     | typeof FIRST_FIT
@@ -56,7 +57,13 @@ class State {
   save(key: string, scope: Scope): void {
     localStorage.setItem(
       key,
-      JSON.stringify({ heap: this.heap, scope: scope })
+      JSON.stringify({
+        heap: this.heap,
+        scope: scope,
+        displayBase: this.displayBase,
+        coalesceAfterFree: this.coalesceAfterFree,
+        memoryAllocationStrategy: this.memoryAllocationStrategy,
+      })
     );
   }
 
@@ -64,8 +71,19 @@ class State {
   load(key: string): Scope {
     const data = localStorage.getItem(key);
     if (data) {
-      const { heap, scope } = JSON.parse(data);
+      const {
+        heap,
+        scope,
+        displayBase,
+        coalesceAfterFree,
+        memoryAllocationStrategy,
+      } = JSON.parse(data);
+
       this.heap = heap;
+      this.displayBase = displayBase;
+      this.coalesceAfterFree = coalesceAfterFree;
+      this.memoryAllocationStrategy = memoryAllocationStrategy;
+
       return scope;
     } else {
       throw new Error("No data found in local storage for the given key.");

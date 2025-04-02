@@ -12,6 +12,7 @@ const literalSchema = z.object({
     z.object({ nodeType: z.literal("integer"), value: z.number() }),
     z.object({ nodeType: z.literal("double"), value: z.number() }),
     z.object({ nodeType: z.literal("string"), value: z.string() }),
+    z.object({ nodeType: z.literal("boolean"), value: z.boolean() }),
   ]),
 });
 type LiteralNode = z.infer<typeof literalSchema>;
@@ -36,6 +37,7 @@ const typeSchema = z.object({
     z.literal("double"),
     z.literal("float"),
     z.literal("string"),
+    z.literal("bool"),
     z.literal("void"),
 
     // The grammar should never output this, but this adds it to TypeNode.type

@@ -154,7 +154,8 @@ type_pointer -> ( type_raw _ "*" ) {%
 %}
 
 type_raw -> (
-  "double" | "float"
+  "bool"
+  | "double" | "float"
   | "string"
   | "uint64_t" | "unsigned" _ "long"
   | "uint32_t" | "unsigned" _ "int"
@@ -206,7 +207,7 @@ type_raw -> (
   }
 %}
 
-literal -> (int | double | doubleNegative | string | char) {%
+literal -> (int | double | doubleNegative | string | char | bool) {%
   function(data) {
     return {
       nodeType: 'literal',
@@ -280,6 +281,15 @@ char -> "'" [^'] "'" {%
     return {
       nodeType: 'integer',
       value: data[1].charCodeAt(0)
+    }
+  }
+%}
+
+bool -> ("true" | "false") {%
+  function(data) {
+    return {
+      nodeType: 'boolean',
+      value: data[0] === 'true'
     }
   }
 %}

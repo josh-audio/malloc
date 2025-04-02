@@ -66,6 +66,44 @@ type Scope = Record<string, TypedRuntimeValueNode>;
 
 class Engine {
   staticGlobalScope: Scope = {
+    // A very awful hack. Our grammar can't currently tell between "true" being
+    // an identifier and "true" being a literal. So we just add it here as a
+    // value in the scope in case the grammar calls it an identifier and the
+    // interpreter tries to look it up.
+    //
+    // The proper solution would be to implement a lexer, but it's not something
+    // I want to put time into right now.
+    true: {
+      nodeType: "typedRuntimeValue",
+      type: {
+        nodeType: "type",
+        type: "bool",
+        isPointer: false,
+      },
+      value: {
+        nodeType: "literal",
+        literal: {
+          nodeType: "boolean",
+          value: true,
+        },
+      },
+    },
+    false: {
+      nodeType: "typedRuntimeValue",
+      type: {
+        nodeType: "type",
+        type: "bool",
+        isPointer: false,
+      },
+      value: {
+        nodeType: "literal",
+        literal: {
+          nodeType: "boolean",
+          value: false,
+        },
+      },
+    },
+
     malloc: {
       nodeType: "typedRuntimeValue",
       type: {
@@ -881,6 +919,62 @@ class Engine {
         },
       },
     },
+
+    setCoalesceAfterFree: {
+      nodeType: "typedRuntimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+        isPointer: false,
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [
+          {
+            nodeType: "declaration",
+            declaration: {
+              nodeType: "singleDeclaration",
+              identifier: {
+                nodeType: "identifier",
+                identifier: "coalesce",
+              },
+              type: {
+                nodeType: "type",
+                type: "bool",
+                isPointer: false,
+              },
+            },
+          },
+        ],
+        body: (
+          args: (UntypedRuntimeValueNode | TypedRuntimeValueNode | TypeNode)[]
+        ) => {
+          if (args[0].nodeType === "type") {
+            throw new Error(
+              `Runtime error: Cannot call setCoalesceAfterFree with a type`
+            );
+          }
+
+          if (args[0].value.nodeType !== "literal") {
+            throw new Error(
+              `Runtime error: Expected argument 0 to be of type int, but got ${args[0].value.nodeType}.`
+            );
+          }
+
+          if (args[0].value.literal.nodeType !== "boolean") {
+            throw new Error(
+              `Internal error: Expected argument 0 to be of type int, but got ${args[0].value.literal.nodeType}.`
+            );
+          }
+
+          const coalesce = args[0].value.literal.value;
+
+          state.coalesceAfterFree = coalesce;
+
+          return { nodeType: "void" };
+        },
+      },
+    },
   };
 
   dynamicGlobalScope: Scope = {};
@@ -974,7 +1068,19 @@ class Engine {
         throw new Error('Type error: Cannot declare variable of type "void".');
       }
 
-      if (statement.declaration.type.type === "string") {
+      if (statement.declaration.type.isPointer) {
+        this.dynamicGlobalScope[statement.declaration.identifier.identifier] = {
+          nodeType: "typedRuntimeValue",
+          type: statement.declaration.type,
+          value: {
+            nodeType: "literal",
+            literal: {
+              nodeType: "integer",
+              value: 0,
+            },
+          },
+        };
+      } else if (statement.declaration.type.type === "string") {
         this.dynamicGlobalScope[statement.declaration.identifier.identifier] = {
           nodeType: "typedRuntimeValue",
           type: statement.declaration.type,
@@ -986,6 +1092,21 @@ class Engine {
             },
           },
         };
+      } else if (statement.declaration.type.type === "bool") {
+        this.dynamicGlobalScope[statement.declaration.identifier.identifier] =
+          coerce(
+            {
+              nodeType: "untypedRuntimeValue",
+              value: {
+                nodeType: "literal",
+                literal: {
+                  nodeType: "boolean",
+                  value: false,
+                },
+              },
+            },
+            statement.declaration.type
+          );
       } else {
         this.dynamicGlobalScope[statement.declaration.identifier.identifier] =
           coerce(
@@ -1023,6 +1144,7 @@ class Engine {
             signed: boolean;
           }
         | { type: "float"; address: number; double: boolean }
+        | { type: "boolean"; address: number }
         | undefined;
 
       if (statement.left.nodeType === "declaration") {
@@ -1083,6 +1205,11 @@ class Engine {
             type: "float",
             address,
             double: type === "double",
+          };
+        } else if (type === "bool") {
+          memWriteInfo = {
+            type: "boolean",
+            address,
           };
         } else {
           throw new Error(
@@ -1199,6 +1326,11 @@ class Engine {
             address,
             double: type === "double",
           };
+        } else if (type === "bool") {
+          memWriteInfo = {
+            type: "boolean",
+            address,
+          };
         } else {
           throw new Error(`Internal error: Unexpected pointer type ${type}.`);
         }
@@ -1214,6 +1346,37 @@ class Engine {
       let scopeItem: TypedRuntimeValueNode;
 
       if (memWriteInfo !== undefined) {
+        if (memWriteInfo.type === "boolean") {
+          if (value.nodeType !== "typedRuntimeValue") {
+            throw new Error(
+              `Runtime error: Expected value to be of type boolean, but got ${value.nodeType}.`
+            );
+          }
+
+          if (value.type.type !== "bool") {
+            throw new Error(
+              `Runtime error: Expected value to be of type boolean, but got ${value.type.type}.`
+            );
+          }
+
+          if (value.value.nodeType !== "literal") {
+            throw new Error(
+              `Internal error: Expected value to be of type "literal", but got ${value.value.nodeType}.`
+            );
+          }
+
+          if (value.value.literal.nodeType !== "boolean") {
+            throw new Error(
+              `Internal error: Expected value to be of type "boolean", but got ${value.value.literal.nodeType}.`
+            );
+          }
+
+          this.writeToHeap(memWriteInfo.address, [
+            value.value.literal.value ? 1 : 0,
+          ]);
+          return value;
+        }
+
         const coerced = coerce(
           {
             nodeType: "untypedRuntimeValue",
@@ -1411,6 +1574,19 @@ class Engine {
         };
       }
 
+      if (type === "bool") {
+        return {
+          nodeType: "untypedRuntimeValue",
+          value: {
+            nodeType: "literal",
+            literal: {
+              nodeType: "boolean",
+              value: this.readFromHeap(address, 1)[0] !== 0,
+            },
+          },
+        };
+      }
+
       if (type === "uint8_t" || type === "int8_t") {
         bytes = this.readFromHeap(address, 1);
         bits = 8;
@@ -1489,6 +1665,42 @@ class Engine {
       }
 
       const type = pointerStart.type.type;
+
+      if (type === "double" || type === "float") {
+        return {
+          nodeType: "untypedRuntimeValue",
+          value: {
+            nodeType: "literal",
+            literal: {
+              nodeType: "double",
+              value: bytesToNumFloat(
+                this.readFromHeap(
+                  pointerStartValue + pointerOffsetValue * 8,
+                  8
+                ),
+                type === "double"
+              ),
+            },
+          },
+        };
+      }
+
+      if (type === "bool") {
+        return {
+          nodeType: "untypedRuntimeValue",
+          value: {
+            nodeType: "literal",
+            literal: {
+              nodeType: "boolean",
+              value:
+                this.readFromHeap(
+                  pointerStartValue + pointerOffsetValue * 1,
+                  1
+                )[0] !== 0,
+            },
+          },
+        };
+      }
 
       let offsetMultiple = 1;
 

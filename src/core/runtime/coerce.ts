@@ -120,7 +120,15 @@ const coerce = (
     );
   }
 
-  if (type.type === "uint64_t") {
+  if (type.isPointer) {
+    console.log(value.value);
+    return {
+      nodeType: "typedRuntimeValue",
+      type: type,
+      value: coerceLiteralToU8(value.value),
+    };
+  }
+  else if (type.type === "uint64_t") {
     return {
       nodeType: "typedRuntimeValue",
       type: type,
@@ -180,6 +188,24 @@ const coerce = (
       type: type,
       value: coerceLiteralToString(value.value),
     };
+  } else if (type.type === "bool") {
+    if (value.value.literal.nodeType === "boolean") {
+      return {
+        nodeType: "typedRuntimeValue",
+        type: type,
+        value: {
+          nodeType: "literal",
+          literal: {
+            nodeType: "boolean",
+            value: value.value.literal.value,
+          },
+        },
+      };
+    } else {
+      throw Error(
+        `Runtime error: Cannot coerce ${value.value.literal.nodeType} to boolean.`
+      );
+    }
   } else {
     throw Error(
       `Internal error: Unexpected type node with type: "${type.nodeType}".`
