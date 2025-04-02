@@ -68,7 +68,9 @@ Besides `malloc()`, `free()` and `sizeof()`, there are a few helper functions th
 - `clear()`: Clears the command history
 - `setDisplayBase(base)`: Sets the display base for the memory visualization; accepts either `10` or `16`. Default is `10`.
 - `setStrategy(strategy)`: Sets the memory allocation strategy. Accepts `FIRST_FIT`, `NEXT_FIT`, `WORST_FIT` or `BEST_FIT`.
-- `save("some key")` and `load("some key")`: Saves and loads memory states. Persists between browser sessions.
+- `coalesce()`: Coalesces fragmented memory. This happens automatically, unless `setCoalesceAfterFree(false)` has been called.
+- `setCoalesceAfterFree(boolean)`: Sets whether coalesce happens automatically after `free()`.
+- `save("some key")` and `load("some key")`: Saves and loads memory states, local scope, and settings. Persists between browser sessions.
 - `strlen()` and `strcpy()`:
   
   Unlike the heap, stack memory does not have a 1:1 byte representation. This means that while heap strings behave like C strings, stack strings do not.
