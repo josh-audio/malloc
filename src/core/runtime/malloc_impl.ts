@@ -39,9 +39,9 @@ const getFreeList = (): {
   ptr: number;
   sizeWithHeader: number;
   next: number;
-  sizeError?: true;
-  nextError?: true;
-  regionError?: true;
+  sizeError: boolean;
+  nextError: boolean;
+  regionError: boolean;
 }[] => {
   const freeList: ReturnType<typeof getFreeList> = [];
 
@@ -50,13 +50,31 @@ const getFreeList = (): {
   let iter = 0;
   while (freeListPointer !== 0) {
     if (iter > 255) {
-      return [{ ptr: 5, sizeWithHeader: 253, next: 0, regionError: true }];
+      return [{ ptr: 5, sizeWithHeader: 253, next: 0, regionError: true, nextError: false, sizeError: false }];
     }
 
     const size = state.heap[freeListPointer - 2];
     const next = state.heap[freeListPointer - 1];
 
-    freeList.push({ ptr: freeListPointer, sizeWithHeader: size, next });
+    let sizeError = false;
+    let nextError = false;
+
+    if (next < freeListPointer) {
+      nextError = true;
+    }
+
+    if (size < 3 || size > 253) {
+      sizeError = true;
+    }
+
+    freeList.push({
+      ptr: freeListPointer,
+      sizeWithHeader: size,
+      next,
+      sizeError,
+      nextError,
+      regionError: false,
+    });
 
     freeListPointer = next;
 
