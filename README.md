@@ -48,7 +48,7 @@ char *b = a + 1; // pointer to memory address 0xB
 *a + *b; // -> 15
 ```
 
-Finally memory can be allocated and freed using `malloc()` and `free()`:
+Memory can be allocated and freed using `malloc()` and `free()`:
 
 ```c
 int *a = malloc(sizeof(int));
@@ -61,38 +61,37 @@ b[1] = 2.3;
 free(b);
 ```
 
-## Interpreter Helpers
+There are also string manipulation functions. They are analogous to the equivalent C functions, though the behavior is not completely one-to-one. This is because, unlike heap memory (the 256 bytes on screen), stack memory does not have a 1:1 byte representation. This means that while heap strings behave like C strings, stack strings do not, and the string functions take this into account.
 
-Besides `malloc()`, `free()` and `sizeof()`, there are a few helper functions that can be used from within the interpreter:
+Here are some things you can do with strings:
+
+```c
+// This is valid C, and also works in the simulator:
+char *a = malloc(strlen("hello") + 1);
+strcpy(a, "hello");
+
+// This is not valid C, but works in the simulator:
+string myString = "hello";
+char *b = malloc(strlen(myString) + 1);
+strcpy(b, myString);
+
+// If you want to read out a string, there is a convenience function for it:
+getString(a); // -> "hello"
+
+// strcpy will happily write past the allocated bounds:
+strcpy(a, "this is way too long");
+```
+
+Besides the functions above, there are a few more helper functions that can be used from within the interpreter:
 - `reset()`: Resets the memory to its original state
 - `clear()`: Clears the command history
 - `setDisplayBase(base)`: Sets the display base for the memory visualization; accepts either `10` or `16`. Default is `10`.
 - `setStrategy(strategy)`: Sets the memory allocation strategy. Accepts `FIRST_FIT`, `NEXT_FIT`, `WORST_FIT` or `BEST_FIT`.
+- `setCoalesceAfterFree(value)`: Sets whether coalesce happens automatically after `free()`.
 - `coalesce()`: Coalesces fragmented memory. This happens automatically, unless `setCoalesceAfterFree(false)` has been called.
-- `setCoalesceAfterFree(boolean)`: Sets whether coalesce happens automatically after `free()`.
+- `strlen()` and `strcpy()`: See above.
+- `getString(address)`: Prints the string at the given address to the console.
 - `save("some key")` and `load("some key")`: Saves and loads memory states, local scope, and settings. Persists between browser sessions.
-- `strlen()` and `strcpy()`:
-  
-  Unlike the heap, stack memory does not have a 1:1 byte representation. This means that while heap strings behave like C strings, stack strings do not.
-
-  Here are some things you can do:
-
-  ```c
-  // This is valid C, and also works in the simulator:
-  char *a = malloc(strlen("hello") + 1);
-  strcpy(a, "hello");
-
-  // This is not valid C, but works in the simulator:
-  string myString = "hello";
-  char *b = malloc(strlen(myString) + 1);
-  strcpy(b, myString);
-
-  // If you want to read out a string, there is a convenience function for it:
-  getString(a); // -> "hello"
-
-  // strcpy will happily write past the allocated bounds:
-  strcpy(a, "this is way too long");
-  ```
 
 ## Development
 
