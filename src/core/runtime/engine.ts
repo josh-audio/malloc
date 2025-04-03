@@ -408,6 +408,12 @@ class Engine {
         arguments: [],
         body: () => {
           initMemory();
+
+          if (state.memoryAllocationStrategy === NEXT_FIT) {
+            // Set the next fit pointer to the beginning of the free list
+            state.heap[2] = state.heap[1];
+          }
+
           return { nodeType: "void" };
         },
       },
