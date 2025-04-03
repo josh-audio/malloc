@@ -1316,6 +1316,12 @@ class Engine {
           offsetMultiple = 4;
         } else if (type.includes("64")) {
           offsetMultiple = 8;
+        } else if (type === "bool") {
+          offsetMultiple = 1;
+        } else if (type === "float") {
+          offsetMultiple = 4;
+        } else if (type === "double") {
+          offsetMultiple = 8;
         }
 
         // If the left side is a dereference, store the memory address for later
@@ -1720,8 +1726,9 @@ class Engine {
               nodeType: "double",
               value: bytesToNumFloat(
                 this.readFromHeap(
-                  pointerStartValue + pointerOffsetValue * 8,
-                  8
+                  pointerStartValue +
+                    pointerOffsetValue * (type === "float" ? 4 : 8),
+                  type === "float" ? 4 : 8
                 ),
                 type === "double"
               ),
