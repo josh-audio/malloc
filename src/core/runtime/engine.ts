@@ -999,6 +999,27 @@ class Engine {
         },
       },
     },
+
+    help: {
+      nodeType: "typedRuntimeValue",
+      type: {
+        nodeType: "type",
+        type: "nativeFunction",
+        isPointer: false,
+      },
+      value: {
+        nodeType: "nativeFunctionDefinition",
+        arguments: [],
+        body: () => {
+          window.open(
+            "https://github.com/josh-audio/malloc/blob/master/README.md#usage",
+            "_blank" // Open in new tab
+          );
+
+          return { nodeType: "void" };
+        },
+      },
+    },
   };
 
   dynamicGlobalScope: Scope = {};
